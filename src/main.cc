@@ -123,6 +123,7 @@ void usage()
 "host language:\n"
 "   -C                   The host language is C, C++, Obj-C or Obj-C++ (default)\n"
 "   -D                   The host language is D\n"
+"   -E                   The host language is D2\n"
 "   -Z                   The host language is Go\n"
 "   -J                   The host language is Java\n"
 "   -R                   The host language is Ruby\n"
