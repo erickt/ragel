@@ -130,6 +130,7 @@ void usage()
 "   -A                   The host language is C#\n"
 "   -O                   The host language is OCaml\n"
 "   -K                   The host language is Crack\n"
+"   --host-lang=<lang>   The host language (c, d, d2, go, java, ruby, csharp, ocaml, crack)\n"
 "line directives: (C/D/Ruby/C#/OCaml)\n"
 "   -L                   Inhibit writing of #line directives\n"
 "code style: (C/D/Java/Ruby/C#/OCaml)\n"
@@ -376,6 +377,32 @@ void InputData::parseArgs( int argc, const char **argv )
 				}
 				else if ( strcmp( arg, "rbx" ) == 0 )
 					rubyImpl = Rubinius;
+				else if ( strcmp( arg, "host-lang" ) == 0 ) {
+					if ( eq == 0 )
+						error() << "expecting '=lang' for language" << endl;
+					else if ( strcmp ( eq, "c" ) == 0 )
+						hostLang = &hostLangC;
+					else if ( strcmp ( eq, "d" ) == 0 )
+						hostLang = &hostLangD;
+					else if ( strcmp ( eq, "d2" ) == 0 )
+						hostLang = &hostLangD2;
+					else if ( strcmp ( eq, "go" ) == 0 )
+						hostLang = &hostLangGo;
+					else if ( strcmp ( eq, "java" ) == 0 )
+						hostLang = &hostLangJava;
+					else if ( strcmp ( eq, "ruby" ) == 0 )
+						hostLang = &hostLangJava;
+					else if ( strcmp ( eq, "csharp" ) == 0 )
+						hostLang = &hostLangJava;
+					else if ( strcmp ( eq, "java" ) == 0 )
+						hostLang = &hostLangJava;
+					else if ( strcmp ( eq, "ocaml" ) == 0 )
+						hostLang = &hostLangOCaml;
+					else if ( strcmp ( eq, "crack" ) == 0 )
+						hostLang = &hostLangCrack;
+					else
+						error() << "invalid value for language" << endl;
+				}
 				else {
 					error() << "--" << pc.paramArg << 
 							" is an invalid argument" << endl;
