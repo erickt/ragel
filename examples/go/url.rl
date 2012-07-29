@@ -344,11 +344,6 @@ func (test *urlTest) compare(url *URL) (passed bool) {
 			string(test.s), url.Port, test.url.Port)
 		passed = true
 	}
-	if url.Port != test.url.Port {
-		fmt.Fprintf(os.Stderr, "FAIL url(%#v) port: %#v != %#v\n",
-			string(test.s), url.Port, test.url.Port)
-		passed = true
-	}
 	if url.Params != test.url.Params {
 		fmt.Fprintf(os.Stderr, "FAIL url(%#v) params: %#v != %#v\n",
 			string(test.s), url.Params, test.url.Params)
