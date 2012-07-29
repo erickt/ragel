@@ -1,5 +1,10 @@
-/url
+/atoi
+/clang
+/gotocallret
+/rpn
+/scan1
 /scan2
+/url
 /*.cmi
 /*.cmx
 /*.ml
