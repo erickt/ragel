@@ -23,7 +23,8 @@ ragel_SOURCES = \
 	cstable.cc csftable.cc csflat.cc csfflat.cc csgoto.cc csfgoto.cc \
 	csipgoto.cc cssplit.cc dotcodegen.cc dotcodegen-orig.cc xmlcodegen.cc reducedgen.cc goipgoto.cc \
 	mlcodegen.cc mltable.cc mlftable.cc mlflat.cc mlfflat.cc mlgoto.cc mlfgoto.cc \
-	crackcodegen.h crackcodegen.cc crackflat.h crackflat.cc
+	crackcodegen.h crackcodegen.cc crackflat.h crackflat.cc \
+	rustcodegen.h rustcodegen.cc
 
 BUILT_SOURCES = \
 	rlscan.cc rlparse.h rlparse.cc version.h

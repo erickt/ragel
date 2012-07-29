@@ -130,7 +130,8 @@ void usage()
 "   -A                   The host language is C#\n"
 "   -O                   The host language is OCaml\n"
 "   -K                   The host language is Crack\n"
-"   --host-lang=<lang>   The host language (c, d, d2, go, java, ruby, csharp, ocaml, crack)\n"
+"   --host-lang=<lang>   The host language (c, d, d2, go, java, ruby, csharp, ocaml, crack,\n"
+"                        rust)\n"
 "line directives: (C/D/Ruby/C#/OCaml)\n"
 "   -L                   Inhibit writing of #line directives\n"
 "code style: (C/D/Java/Ruby/C#/OCaml)\n"
@@ -400,6 +401,8 @@ void InputData::parseArgs( int argc, const char **argv )
 						hostLang = &hostLangOCaml;
 					else if ( strcmp ( eq, "crack" ) == 0 )
 						hostLang = &hostLangCrack;
+					else if ( strcmp ( eq, "rust" ) == 0 )
+						hostLang = &hostLangRust;
 					else
 						error() << "invalid value for language" << endl;
 				}

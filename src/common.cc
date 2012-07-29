@@ -132,6 +132,18 @@ HostType hostTypesOCaml[] =
 	{ "int",    0,  "int",      true,   true,  false, S31BIT_MIN, S31BIT_MAX, 4 },
 };
 
+HostType hostTypesRust[] = 
+{
+	{ "i8",    0,  "i8",    true,  true,  false,  CHAR_MIN, CHAR_MAX,  1 },
+	{ "u8",    0,  "u8",    false, true,  false,  0,        UCHAR_MAX, 1 },
+	{ "i16",   0,  "i16",   true,  true,  false,  SHRT_MIN, SHRT_MAX,  2 },
+	{ "u16",   0,  "u16",   false, true,  false,  0,        USHRT_MAX, 2 },
+	{ "i32",   0,  "i32",   true,  true,  false,  INT_MIN,  INT_MAX,   4 },
+	{ "u32",   0,  "u32",   false, true,  false,  0,        UINT_MAX,  4 },
+	{ "i64",   0,  "i64",   true,  true,  false,  LONG_MIN, LONG_MAX,  8 },
+	{ "u64",   0,  "u64",   false, true,  false,  0,        ULONG_MAX, 8 },
+};
+
 HostLang hostLangC =      { HostLang::C,      hostTypesC,      8,  hostTypesC+0,       true };
 HostLang hostLangD =      { HostLang::D,      hostTypesD,      9,  hostTypesD+2,       true };
 HostLang hostLangD2 =     { HostLang::D2,     hostTypesD,      9,  hostTypesD+2,       true };
@@ -141,6 +153,7 @@ HostLang hostLangRuby =   { HostLang::Ruby,   hostTypesRuby,   2,  hostTypesRuby
 HostLang hostLangCSharp = { HostLang::CSharp, hostTypesCSharp, 9,  hostTypesCSharp+4,  true };
 HostLang hostLangOCaml =  { HostLang::OCaml,  hostTypesOCaml,  1,  hostTypesOCaml+0,   false };
 HostLang hostLangCrack =  { HostLang::Crack,  hostTypesCrack,  5,  hostTypesCrack+0,   true };
+HostLang hostLangRust =   { HostLang::Rust,   hostTypesRust,   8,  hostTypesRust+1,    true };
 HostLang *hostLang = &hostLangC;
 
 HostType *findAlphType( const char *s1 )

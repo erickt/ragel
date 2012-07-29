@@ -73,6 +73,8 @@
 
 #include "crackflat.h"
 
+#include "rustcodegen.h"
+
 using std::cerr;
 using std::endl;
 
@@ -387,6 +389,15 @@ CodeGenData *ocamlMakeCodeGen( const CodeGenArgs &args )
 }
 
 
+/* Invoked by the parser when a ragel definition is opened. */
+CodeGenData *rustMakeCodeGen( const CodeGenArgs &args )
+{
+	CodeGenData *codeGen = new RustTabCodeGen(args);
+
+  return codeGen;
+}
+
+
 CodeGenData *makeCodeGen( const CodeGenArgs &args )
 {
 	CodeGenData *cgd = 0;
@@ -408,6 +419,8 @@ CodeGenData *makeCodeGen( const CodeGenArgs &args )
 		cgd = ocamlMakeCodeGen( args );
 	else if ( hostLang == &hostLangCrack )
 		cgd = crackMakeCodeGen( args );
+	else if ( hostLang == &hostLangRust )
+		cgd = rustMakeCodeGen( args );
 	return cgd;
 }
 

@@ -59,6 +59,8 @@
 
 #include "crackflat.h"
 
+#include "rustcodegen.h"
+
 string itoa( int i )
 {
 	char buf[16];
@@ -90,7 +92,9 @@ void lineDirective( ostream &out, const char *fileName, int line )
 		else if ( hostLang == &hostLangOCaml )
 			ocamlLineDirective( out, fileName, line );
 		else if ( hostLang == &hostLangCrack )
-			rubyLineDirective( out, fileName, line );
+			crackLineDirective( out, fileName, line );
+		else if ( hostLang == &hostLangRust )
+			rustLineDirective( out, fileName, line );
 
 	}
 }
