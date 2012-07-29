@@ -1,10 +1,10 @@
 
 .SUFFIXES:
 
-RAGEL = ../../ragel/ragel
+RAGEL = ../../src/ragel
 MODE = -G0
 
-all: url scan2
+all: url rpn atoi clang gotocallret scan1 scan2
 
 url: url.rl
 	$(RAGEL) $(MODE) -O url.rl -o url.ml
@@ -17,23 +17,23 @@ cond: cond.rl
 
 rpn: rpn.rl
 	$(RAGEL) $(MODE) -O -o rpn.ml rpn.rl
-	ocamlopt -g unix.cmxa -o rpn rpn.ml
+	ocamlopt -g unix.cmxa -o rpn t.ml rpn.ml
 
 atoi: atoi.rl
 	$(RAGEL) $(MODE) -O -o atoi.ml atoi.rl
-	ocamlopt -g unix.cmxa -o atoi atoi.ml
+	ocamlopt -g unix.cmxa -o atoi t.ml atoi.ml
 
 clang: clang.rl
 	$(RAGEL) $(MODE) -O -o clang.ml clang.rl
-	ocamlopt -g unix.cmxa -o clang clang.ml
+	ocamlopt -g unix.cmxa -o clang t.ml clang.ml
 
 gotocallret: gotocallret.rl
 	$(RAGEL) $(MODE) -O -o gotocallret.ml gotocallret.rl
-	ocamlopt -g unix.cmxa -o gotocallret gotocallret.ml
+	ocamlopt -g unix.cmxa -o gotocallret t.ml gotocallret.ml
 
 scan1: scan1.rl
 	$(RAGEL) $(MODE) -O -o scan1.ml scan1.rl
-	ocamlopt -g unix.cmxa -o scan1 scan1.ml
+	ocamlopt -g unix.cmxa -o scan1 t.ml scan1.ml
 
 scan2: scan2.rl
 	$(RAGEL) $(MODE) -O -o scan2.ml scan2.rl
