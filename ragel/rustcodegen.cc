@@ -80,7 +80,7 @@ void RustTabCodeGen::GOTO( ostream &ret, int gotoDest, bool inFinish )
 		"{\n"
 		"    " << vCS() << " = " << gotoDest << ";\n"
 		"    _goto_targ = " << _again << ";\n"
-		"    " << CTRL_FLOW() << "loop;\n"
+		"    " << CTRL_FLOW() << "loop _goto;\n"
 		"}";
 }
 
@@ -96,7 +96,7 @@ void RustTabCodeGen::GOTO_EXPR( ostream &ret, GenInlineItem *ilItem, bool inFini
 		"    );\n"
 		"    _goto_targ = " << _again << ";\n"
 		"    " << CTRL_FLOW() <<
-		"    loop;\n"
+		"    loop _goto;\n"
 		"}";
 }
 
@@ -114,7 +114,7 @@ void RustTabCodeGen::CALL( ostream &ret, int callDest, int targState, bool inFin
 		"    " << vCS() << " = " << callDest << ";\n"
 		"    _goto_targ = " << _again << ";\n"
 		"    " << CTRL_FLOW() <<
-		"    loop;\n"
+		"    loop _goto;\n"
 		"}";
 
 	if ( prePushExpr != 0 )
@@ -138,7 +138,7 @@ void RustTabCodeGen::CALL_EXPR( ostream &ret, GenInlineItem *ilItem, int targSta
 		"    );\n"
 		"    _goto_targ = " << _again << ";\n"
 		"    " << CTRL_FLOW() <<
-		"    loop;\n"
+		"    loop _goto;\n"
 		"}";
 
 	if ( prePushExpr != 0 )
@@ -161,7 +161,7 @@ void RustTabCodeGen::RET( ostream &ret, bool inFinish )
 	ret <<
 		"    _goto_targ = " << _again << ";\n"
 		"    " << CTRL_FLOW() <<
-		"    loop;\n"
+		"    loop _goto;\n"
 		"}";
 }
 
@@ -172,7 +172,7 @@ void RustTabCodeGen::BREAK( ostream &ret, int targState )
 		"    " << P() << " += 1;\n"
 		"    _goto_targ = " << _out << ";\n"
 		"    " << CTRL_FLOW() <<
-		"    loop;\n"
+		"    loop _goto;\n"
 		"}";
 }
 
@@ -341,7 +341,7 @@ void RustTabCodeGen::COND_TRANSLATE()
 		"                    _lower = _mid + 2;\n"
 		"                } else {\n"
 		"                    match " << C() << "[" << CO() << "[" << vCS() << "]"
-							               " + ((_mid - _keys)>>1)] => {\n"
+		" + ((_mid - _keys)>>1)] => {\n"
 		;
 
 	for ( CondSpaceList::Iter csi = condSpaceList; csi.lte(); csi++ ) {
@@ -376,8 +376,7 @@ void RustTabCodeGen::COND_TRANSLATE()
 void RustTabCodeGen::LOCATE_TRANS()
 {
 	out <<
-		"            let mut _break_match = false;\n"
-		"            loop {\n"
+		"            loop _match: {\n"
 		"                _keys = " << KO() << "[" << vCS() << "] as int;\n"
 		"                _trans = " << IO() << "[" << vCS() << "] as int;\n"
 		"                _klen = " << SL() << "[" << vCS() << "] as int;\n"
@@ -395,11 +394,9 @@ void RustTabCodeGen::LOCATE_TRANS()
 		"                            _lower = _mid + 1;\n"
 		"                        } else {\n"
 		"                            _trans += (_mid - _keys);\n"
-		"                            _break_match = true;\n"
-		"                            break;\n"
+		"                            break _match;\n"
 		"                        }\n"
 		"                    }\n"
-		"                    if _break_match { break; }\n"
 		"                    _keys += _klen;\n"
 		"                    _trans += _klen;\n"
 		"                }\n"
@@ -419,11 +416,9 @@ void RustTabCodeGen::LOCATE_TRANS()
 		"                            _lower = _mid + 2;\n"
 		"                        } else {\n"
 		"                            _trans += ((_mid - _keys)>>1);\n"
-		"                            _break_match = true;\n"
-		"                            break;\n"
+		"                            break _match;\n"
 		"                        }\n"
 		"                    }\n"
-		"                    if _break_match { break; }\n"
 		"                    _trans += _klen;\n"
 		"                }\n"
 		"                break;\n"
@@ -1070,7 +1065,7 @@ void RustTabCodeGen::writeExec()
 		"\n";
 	
 	out <<
-		"    loop {\n"
+		"    loop _goto: {\n"
 		"        match _goto_targ {\n"
 		"          0 => {\n";
 
@@ -1078,7 +1073,7 @@ void RustTabCodeGen::writeExec()
 		out <<
 			"            if " << P() << " == " << PE() << " {\n"
 			"                _goto_targ = " << _test_eof << ";\n"
-			"                loop;\n"
+			"                loop _goto;\n"
 			"            }\n";
 	}
 
@@ -1086,13 +1081,13 @@ void RustTabCodeGen::writeExec()
 		out <<
 			"            if " << vCS() << " == " << redFsm->errState->id << " {\n"
 			"                _goto_targ = " << _out << ";\n"
-			"                loop;\n"
+			"                loop _goto;\n"
 			"            }\n";
 	}
 
 	out <<
 		"            _goto_targ = " << _resume << ";\n"
-		"            loop;\n"
+		"            loop _goto;\n"
 		"          }\n"
 		"          " << _resume << " => {\n";
 
@@ -1181,7 +1176,7 @@ void RustTabCodeGen::writeExec()
 		out <<
 			"          if " << vCS() << " == " << redFsm->errState->id << " {\n"
 			"              _goto_targ = " << _out << ";\n"
-			"              loop;\n"
+			"              loop _goto;\n"
 			"          }\n";
 	}
 
@@ -1190,16 +1185,16 @@ void RustTabCodeGen::writeExec()
 			"          " << P() << " += 1;\n"
 			"          if " << P() << " != " << PE() << " {\n"
 			"              _goto_targ = " << _resume << ";\n"
-			"              loop;\n"
+			"              loop _goto;\n"
 			"          }\n"
 			"        _goto_targ = " << _test_eof << ";\n"
-			"        loop;\n";
+			"        loop _goto;\n";
 	}
 	else {
 		out <<
 			"          " << P() << " += 1;\n"
 			"          _goto_targ = " << _resume << ";\n"
-			"          loop;\n";
+			"          loop _goto;\n";
 	}
 
 	out <<
@@ -1215,7 +1210,7 @@ void RustTabCodeGen::writeExec()
 				"                if " << ET() << "[" << vCS() << "] > 0 {\n"
 				"                    _trans = (" << ET() << "[" << vCS() << "] - 1) as int;\n"
 				"                    _goto_targ = " << _eof_trans << ";\n"
-				"                    loop;\n"
+				"                    loop _goto;\n"
 				"                }\n";
 		}
 
