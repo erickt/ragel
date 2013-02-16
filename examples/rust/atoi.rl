@@ -1,11 +1,10 @@
-
 %%{
 machine atoi;
 write data;
 }%%
 
 
-fn atoi(data: ~str) -> option<int> {
+fn atoi(data: &str) -> Option<int> {
   let mut cs: int;
   let mut p = 0;
   let mut pe = data.len();
@@ -28,18 +27,19 @@ fn atoi(data: ~str) -> option<int> {
     if neg { res = -1 * res; }
 
     if cs < atoi_first_final {
-        none
+        None
     } else {
-        some(res)
+        Some(res)
     }
 }
 
-fn main() {
-    assert atoi(~"7") == some(7);
-    assert atoi(~"666") == some(666);
-    assert atoi(~"-666") == some(-666);
-    assert atoi(~"+666") == some(666);
-    assert atoi(~"123456789") == some(123456789);
-    assert atoi(~"+123456789\n") == some(123456789);
-    assert atoi(~"+ 1234567890") == none;
+#[test]
+fn test_atoi() {
+    assert atoi(~"7") == Some(7);
+    assert atoi(~"666") == Some(666);
+    assert atoi(~"-666") == Some(-666);
+    assert atoi(~"+666") == Some(666);
+    assert atoi(~"123456789") == Some(123456789);
+    assert atoi(~"+123456789\n") == Some(123456789);
+    assert atoi(~"+ 1234567890") == None;
 }

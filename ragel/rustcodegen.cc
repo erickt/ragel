@@ -9,15 +9,15 @@
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  Ragel is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with Ragel; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+ *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "ragel.h"
@@ -80,23 +80,23 @@ void RustTabCodeGen::GOTO( ostream &ret, int gotoDest, bool inFinish )
 		"{\n"
 		"    " << vCS() << " = " << gotoDest << ";\n"
 		"    _goto_targ = " << _again << ";\n"
-		"    " << CTRL_FLOW() << "again;\n"
+		"    " << CTRL_FLOW() << "loop;\n"
 		"}";
 }
 
 void RustTabCodeGen::GOTO_EXPR( ostream &ret, GenInlineItem *ilItem, bool inFinish )
 {
 	ret <<
-	 	"{\n"
-	 	"    " << vCS() << " = (";
+		"{\n"
+		"    " << vCS() << " = (";
 
 	INLINE_LIST( ret, ilItem->children, 0, inFinish );
 
 	ret <<
-	 	"    );\n"
-	 	"    _goto_targ = " << _again << ";\n"
-	 	"    " << CTRL_FLOW() <<
-	 	"    again;\n"
+		"    );\n"
+		"    _goto_targ = " << _again << ";\n"
+		"    " << CTRL_FLOW() <<
+		"    loop;\n"
 		"}";
 }
 
@@ -108,14 +108,14 @@ void RustTabCodeGen::CALL( ostream &ret, int callDest, int targState, bool inFin
 	}
 
 	ret <<
-	 	"{\n"
+		"{\n"
 		"    " << STACK() << "[" << TOP() << "] = " << vCS() << ";\n"
 		"    " << TOP() << " += 1;\n"
-	 	"    " << vCS() << " = " << callDest << ";\n"
+		"    " << vCS() << " = " << callDest << ";\n"
 		"    _goto_targ = " << _again << ";\n"
-	 	"    " << CTRL_FLOW() <<
-	 	"    again;\n"
-    "}";
+		"    " << CTRL_FLOW() <<
+		"    loop;\n"
+		"}";
 
 	if ( prePushExpr != 0 )
 		ret << "}";
@@ -129,17 +129,17 @@ void RustTabCodeGen::CALL_EXPR( ostream &ret, GenInlineItem *ilItem, int targSta
 	}
 
 	ret <<
-	 	"{\n"
+		"{\n"
 		"    " << STACK() << "[" << TOP() << "] = " << vCS() << ";\n"
 		"    " << TOP() << " += 1;\n"
 		"    " << vCS() << " = (";
-	      INLINE_LIST( ret, ilItem->children, targState, inFinish );
+	INLINE_LIST( ret, ilItem->children, targState, inFinish );
 	ret <<
-	 	"    );\n"
+		"    );\n"
 		"    _goto_targ = " << _again << ";\n"
 		"    " << CTRL_FLOW() <<
-	 	"    again;\n"
-    "}";
+		"    loop;\n"
+		"}";
 
 	if ( prePushExpr != 0 )
 		ret << "}";
@@ -148,7 +148,7 @@ void RustTabCodeGen::CALL_EXPR( ostream &ret, GenInlineItem *ilItem, int targSta
 void RustTabCodeGen::RET( ostream &ret, bool inFinish )
 {
 	ret <<
-	 	"{\n"
+		"{\n"
 		"    " << TOP() << " -= 1;\n"
 		"    " << vCS() << " = " << STACK() << "[" << TOP() << "] as int;";
 
@@ -159,20 +159,20 @@ void RustTabCodeGen::RET( ostream &ret, bool inFinish )
 	}
 
 	ret <<
-	 	"    _goto_targ = " << _again << ";\n"
-	  "    " << CTRL_FLOW() <<
-	 	"    again;\n"
+		"    _goto_targ = " << _again << ";\n"
+		"    " << CTRL_FLOW() <<
+		"    loop;\n"
 		"}";
 }
 
 void RustTabCodeGen::BREAK( ostream &ret, int targState )
 {
 	ret <<
-	 	"{\n"
-	 	"    " << P() << " += 1;\n"
+		"{\n"
+		"    " << P() << " += 1;\n"
 		"    _goto_targ = " << _out << ";\n"
 		"    " << CTRL_FLOW() <<
-	 	"    again;\n"
+		"    loop;\n"
 		"}";
 }
 
@@ -200,7 +200,7 @@ void RustTabCodeGen::EXEC( ostream &ret, GenInlineItem *item, int targState, int
 
 /* Write out an inline tree structure. Walks the list and possibly calls out
  * to virtual functions than handle language specific items in the tree. */
-void RustTabCodeGen::INLINE_LIST( ostream &ret, GenInlineList *inlineList, 
+void RustTabCodeGen::INLINE_LIST( ostream &ret, GenInlineList *inlineList,
 		int targState, bool inFinish )
 {
 	for ( GenInlineList::Iter item = *inlineList; item.lte(); item++ ) {
@@ -323,7 +323,7 @@ string RustTabCodeGen::WIDE_ALPH_TYPE()
 
 void RustTabCodeGen::COND_TRANSLATE()
 {
-	out << 
+	out <<
 		"            _widec = " << GET_KEY() << ";\n"
 		"            _keys = " << CO() << "[" << vCS() << "] as int * 2\n;"
 		"            _klen = " << CL() << "[" << vCS() << "] as int;\n"
@@ -340,14 +340,14 @@ void RustTabCodeGen::COND_TRANSLATE()
 		"                } else if " << GET_WIDE_KEY() << " > " << CK() << "[_mid+1] {\n"
 		"                    _lower = _mid + 2;\n"
 		"                } else {\n"
-		"                    alt check " << C() << "[" << CO() << "[" << vCS() << "]"
-							               " + ((_mid - _keys)>>1)] {\n"
+		"                    match " << C() << "[" << CO() << "[" << vCS() << "]"
+							               " + ((_mid - _keys)>>1)] => {\n"
 		;
 
 	for ( CondSpaceList::Iter csi = condSpaceList; csi.lte(); csi++ ) {
 		GenCondSpace *condSpace = csi;
 		out << "                    " << condSpace->condSpaceId << "{\n";
-		out << "                      _widec = " << KEY(condSpace->baseKey) << 
+		out << "                      _widec = " << KEY(condSpace->baseKey) <<
 				" + (" << GET_KEY() << " - " << KEY(keyOps->minKey) << ");\n";
 
 		for ( GenCondSet::Iter csi = condSpace->condSet; csi.lte(); csi++ ) {
@@ -357,12 +357,13 @@ void RustTabCodeGen::COND_TRANSLATE()
 			out << " { _widec += " << condValOffset << "; }\n";
 		}
 
-		out << 
+		out <<
 			"                    break;\n"
 			"                }\n";
 	}
 
-	out << 
+	out <<
+		"                _ => fail!()";
 		"}\n"
 		"                      break;\n"
 		"                    }\n"
@@ -437,7 +438,7 @@ void RustTabCodeGen::calcIndexSize()
 
 	/* Calculate cost of using with indicies. */
 	for ( RedStateList::Iter st = redFsm->stateList; st.lte(); st++ ) {
-		int totalIndex = st->outSingle.length() + st->outRange.length() + 
+		int totalIndex = st->outSingle.length() + st->outRange.length() +
 				(st->defTrans == 0 ? 0 : 1);
 		sizeWithInds += arrayTypeSize(redFsm->maxIndex) * totalIndex;
 	}
@@ -447,7 +448,7 @@ void RustTabCodeGen::calcIndexSize()
 
 	/* Calculate the cost of not using indicies. */
 	for ( RedStateList::Iter st = redFsm->stateList; st.lte(); st++ ) {
-		int totalIndex = st->outSingle.length() + st->outRange.length() + 
+		int totalIndex = st->outSingle.length() + st->outRange.length() +
 				(st->defTrans == 0 ? 0 : 1);
 		sizeWithoutInds += arrayTypeSize(redFsm->maxState) * totalIndex;
 		if ( redFsm->anyActions() )
@@ -494,12 +495,12 @@ int RustTabCodeGen::TRANS_ACTION( RedTransAp *trans )
 
 std::ostream &RustTabCodeGen::TO_STATE_ACTION_SWITCH()
 {
-	/* Walk the list of functions, printing the alts. */
+	/* Walk the list of functions, printing the matches. */
 	for ( GenActionList::Iter act = actionList; act.lte(); act++ ) {
 		/* Write out referenced actions. */
 		if ( act->numToStateRefs > 0 ) {
-			/* Write the alt label and the action. */
-			out << "                      " << act->actionId << " {\n";
+			/* Write the match label and the action. */
+			out << "                      " << act->actionId << " => {\n";
 			ACTION( out, act, 0, false );
 			out << "                      }\n";
 		}
@@ -511,12 +512,12 @@ std::ostream &RustTabCodeGen::TO_STATE_ACTION_SWITCH()
 
 std::ostream &RustTabCodeGen::FROM_STATE_ACTION_SWITCH()
 {
-	/* Walk the list of functions, printing the alts. */
+	/* Walk the list of functions, printing the matches. */
 	for ( GenActionList::Iter act = actionList; act.lte(); act++ ) {
 		/* Write out referenced actions. */
 		if ( act->numFromStateRefs > 0 ) {
-			/* Write the alt label and the action. */
-			out << "                      " << act->actionId << " {\n";
+			/* Write the match label and the action. */
+			out << "                      " << act->actionId << " => {\n";
 			ACTION( out, act, 0, false );
 			out << "                      }\n";
 		}
@@ -528,12 +529,12 @@ std::ostream &RustTabCodeGen::FROM_STATE_ACTION_SWITCH()
 
 std::ostream &RustTabCodeGen::EOF_ACTION_SWITCH()
 {
-	/* Walk the list of functions, printing the alts. */
+	/* Walk the list of functions, printing the matches. */
 	for ( GenActionList::Iter act = actionList; act.lte(); act++ ) {
 		/* Write out referenced actions. */
 		if ( act->numEofRefs > 0 ) {
-			/* Write the alt label and the action. */
-			out << "                      " << act->actionId << " {\n";
+			/* Write the match label and the action. */
+			out << "                      " << act->actionId << " => {\n";
 			ACTION( out, act, 0, true );
 			out << "                      }\n";
 		}
@@ -546,12 +547,12 @@ std::ostream &RustTabCodeGen::EOF_ACTION_SWITCH()
 
 std::ostream &RustTabCodeGen::ACTION_SWITCH()
 {
-	/* Walk the list of functions, printing the alts. */
+	/* Walk the list of functions, printing the matches. */
 	for ( GenActionList::Iter act = actionList; act.lte(); act++ ) {
 		/* Write out referenced actions. */
 		if ( act->numTransRefs > 0 ) {
-			/* Write the alt label and the action. */
-			out << "                      " << act->actionId << " {\n";
+			/* Write the match label and the action. */
+			out << "                      " << act->actionId << " => {\n";
 			ACTION( out, act, 0, false );
 			out << "                      }\n";
 		}
@@ -875,7 +876,7 @@ void RustTabCodeGen::writeExports()
 {
 	if ( exportList.length() > 0 ) {
 		for ( ExportList::Iter ex = exportList; ex.lte(); ex++ ) {
-			STATIC_VAR( ALPH_TYPE(), DATA_PREFIX() + "ex_" + ex->name ) 
+			STATIC_VAR( ALPH_TYPE(), DATA_PREFIX() + "ex_" + ex->name )
 					<< " = " << KEY(ex->key) << ";\n";
 		}
 		out << "\n";
@@ -1028,7 +1029,7 @@ void RustTabCodeGen::writeData()
 
 	if ( entryPointNames.length() > 0 ) {
 		for ( EntryNameVect::Iter en = entryPointNames; en.lte(); en++ ) {
-			STATIC_VAR( "int", DATA_PREFIX() + "en_" + *en ) << 
+			STATIC_VAR( "int", DATA_PREFIX() + "en_" + *en ) <<
 					" = " << entryPointIds[en.pos()] << ";\n";
 		}
 		out << "\n";
@@ -1055,10 +1056,10 @@ void RustTabCodeGen::writeExec()
 	if ( redFsm->anyConditions() )
 		out << "    let _widec: int;\n";
 
-	if ( redFsm->anyToStateActions() || redFsm->anyRegActions() || 
+	if ( redFsm->anyToStateActions() || redFsm->anyRegActions() ||
 			redFsm->anyFromStateActions() )
 	{
-		out << 
+		out <<
 			"    let mut _acts: int;\n"
 			"    let mut _nacts: int;\n";
 	}
@@ -1070,30 +1071,30 @@ void RustTabCodeGen::writeExec()
 	
 	out <<
 		"    loop {\n"
-		"        alt check _goto_targ {\n"
-		"          0 {\n";
+		"        match _goto_targ {\n"
+		"          0 => {\n";
 
 	if ( !noEnd ) {
-		out << 
+		out <<
 			"            if " << P() << " == " << PE() << " {\n"
 			"                _goto_targ = " << _test_eof << ";\n"
-			"                again;\n"
+			"                loop;\n"
 			"            }\n";
 	}
 
 	if ( redFsm->errState != 0 ) {
-		out << 
+		out <<
 			"            if " << vCS() << " == " << redFsm->errState->id << " {\n"
 			"                _goto_targ = " << _out << ";\n"
-			"                again;\n"
+			"                loop;\n"
 			"            }\n";
 	}
 
 	out <<
 		"            _goto_targ = " << _resume << ";\n"
-		"            again;\n"
+		"            loop;\n"
 		"          }\n"
-	 	"          " << _resume << " {\n"; 
+		"          " << _resume << " => {\n";
 
 	if ( redFsm->anyFromStateActions() ) {
 		out <<
@@ -1104,8 +1105,9 @@ void RustTabCodeGen::writeExec()
 			"                _nacts -= 1;\n"
 			"                let __acts = _acts;\n"
 			"                _acts += 1;\n"
-			"                alt check " << A() << "[__acts] {\n";
+			"                match " << A() << "[__acts] {\n";
 			FROM_STATE_ACTION_SWITCH() <<
+			"                    _ => fail!(),\n"
 			"                }\n"
 			"            }\n"
 			"\n";
@@ -1122,9 +1124,9 @@ void RustTabCodeGen::writeExec()
 	if ( redFsm->anyEofTrans() )
 		out <<
 			"            _goto_targ = " << _eof_trans << ";\n"
-			"            again;\n"
+			"            loop;\n"
 			"          }\n"
-		 	"          " << _eof_trans << " {\n";
+			"          " << _eof_trans << " => {\n";
 
 	if ( redFsm->anyRegCurStateRef() )
 		out << "            _ps = " << vCS() << ";\n";
@@ -1143,8 +1145,9 @@ void RustTabCodeGen::writeExec()
 			"                    _nacts -= 1;\n"
 			"                    let __acts = _acts;\n"
 			"                    _acts += 1;\n"
-			"                    alt check " << A() << "[__acts] {\n";
-			ACTION_SWITCH() <<
+			"                    match " << A() << "[__acts] {\n";
+		ACTION_SWITCH() <<
+			      "                        _ => fail!(),"
 			"                    }\n"
 			"                }\n"
 			"            }\n"
@@ -1153,9 +1156,9 @@ void RustTabCodeGen::writeExec()
 
 	out <<
 		"          _goto_targ = " << _again << ";\n"
-		"          again;\n"
+		"          loop;\n"
 		"        }\n"
-		"        " << _again << " {\n";
+		"        " << _again << " => {\n";
 
 	if ( redFsm->anyToStateActions() ) {
 		out <<
@@ -1166,44 +1169,45 @@ void RustTabCodeGen::writeExec()
 			"              _nacts -= 1;\n"
 			"              let __acts = _acts;\n"
 			"              _acts += 1;\n"
-			"              alt check " << A() << "[__acts] {\n";
-			TO_STATE_ACTION_SWITCH() <<
+			"              match " << A() << "[__acts] {\n";
+		TO_STATE_ACTION_SWITCH() <<
+			"                  _ => fail!(),"
 			"              }\n"
 			"          }\n"
 			"\n";
 	}
 
 	if ( redFsm->errState != 0 ) {
-		out << 
+		out <<
 			"          if " << vCS() << " == " << redFsm->errState->id << " {\n"
 			"              _goto_targ = " << _out << ";\n"
-			"              again;\n"
+			"              loop;\n"
 			"          }\n";
 	}
 
 	if ( !noEnd ) {
-		out << 
+		out <<
 			"          " << P() << " += 1;\n"
 			"          if " << P() << " != " << PE() << " {\n"
 			"              _goto_targ = " << _resume << ";\n"
-			"              again;\n"
+			"              loop;\n"
 			"          }\n"
 			"        _goto_targ = " << _test_eof << ";\n"
-			"        again;\n";
+			"        loop;\n";
 	}
 	else {
-		out << 
+		out <<
 			"          " << P() << " += 1;\n"
 			"          _goto_targ = " << _resume << ";\n"
-			"          again;\n";
+			"          loop;\n";
 	}
 
 	out <<
 		"        }\n";
 
 	if ( redFsm->anyEofTrans() || redFsm->anyEofActions() ) {
-    out <<
-			"        " << _test_eof << " {\n"
+		out <<
+			"        " << _test_eof << " => {\n"
 			"            if " << P() << " == " << vEOF() << " {\n";
 
 		if ( redFsm->anyEofTrans() ) {
@@ -1211,7 +1215,7 @@ void RustTabCodeGen::writeExec()
 				"                if " << ET() << "[" << vCS() << "] > 0 {\n"
 				"                    _trans = (" << ET() << "[" << vCS() << "] - 1) as int;\n"
 				"                    _goto_targ = " << _eof_trans << ";\n"
-				"                    again;\n"
+				"                    loop;\n"
 				"                }\n";
 		}
 
@@ -1224,8 +1228,9 @@ void RustTabCodeGen::writeExec()
 				"                    __nacts -= 1;\n"
 				"                    let ___acts = __acts;\n"
 				"                    __acts += 1;\n"
-				"                    alt check " << A() << "[___acts] {\n";
-				EOF_ACTION_SWITCH() <<
+				"                    match " << A() << "[___acts] {\n";
+			EOF_ACTION_SWITCH() <<
+	  			"                        _ => fail!(),"
 				"                    }\n"
 				"                }\n";
 		}
@@ -1236,11 +1241,12 @@ void RustTabCodeGen::writeExec()
 			"\n";
 	} else {
 		out <<
-			"        " << _test_eof << " { }\n"; 
+			"        " << _test_eof << " => { }\n";
   }
 
 	out <<
-		"        " << _out << " { }\n"; 
+		"        " << _out << " => { }\n"
+		"        _ => fail!(),";
 
 	/* The switch and goto loop. */
 	out <<
@@ -1260,10 +1266,7 @@ std::ostream &RustTabCodeGen::OPEN_ARRAY( string type, string name )
 	div_count = 1;
 
 	out <<
-    "fn init_" << name << "_0() -> ~[" << type << "] {\n"
-		"    ~[\n";
-
-	array_inits.append("let " + name + " = init_" + name + "_0();");
+		"const " << name << ": &static/[" << type << "] = &[\n";
 
 	return out;
 }
@@ -1275,7 +1278,7 @@ std::ostream &RustTabCodeGen::ARRAY_ITEM( string item, bool last )
 	out << setw(5) << setiosflags(ios::right) << item;
 	
 	if ( !last ) {
-		if (item_count % IALL == 0) { 
+		if (item_count % IALL == 0) {
 			out << ",\n";
 		} else {
 			out << ",";
@@ -1288,8 +1291,7 @@ std::ostream &RustTabCodeGen::CLOSE_ARRAY()
 {
 	out <<
 		"\n"
-		"    ]\n"
-		"}\n";
+		"];\n";
 
 	return out;
 }
@@ -1315,7 +1317,7 @@ string RustTabCodeGen::NULL_ITEM()
 string RustTabCodeGen::GET_KEY()
 {
 	ostringstream ret;
-	if ( getKeyExpr != 0 ) { 
+	if ( getKeyExpr != 0 ) {
 		/* Emit the user supplied method of retrieving the key. */
 		ret << "(";
 		INLINE_LIST( ret, getKeyExpr, 0, false );
@@ -1394,7 +1396,7 @@ string RustTabCodeGen::ACCESS()
 }
 
 string RustTabCodeGen::P()
-{ 
+{
 	ostringstream ret;
 	if ( pExpr == 0 )
 		ret << "p";
@@ -1527,7 +1529,7 @@ string RustTabCodeGen::DATA()
 
 string RustTabCodeGen::GET_WIDE_KEY()
 {
-	if ( redFsm->anyConditions() ) 
+	if ( redFsm->anyConditions() )
 		return "_widec";
 	else
 		return GET_KEY();
@@ -1568,18 +1570,18 @@ string RustTabCodeGen::INT( int i )
 	return ret.str();
 }
 
-void RustTabCodeGen::LM_SWITCH( ostream &ret, GenInlineItem *item, 
+void RustTabCodeGen::LM_SWITCH( ostream &ret, GenInlineItem *item,
 		int targState, int inFinish )
 {
-	ret << 
-		"    alt check " << ACT() << " {\n";
+	ret <<
+		"    match " << ACT() << " {\n";
 
 	for ( GenInlineList::Iter lma = *item->children; lma.lte(); lma++ ) {
-		/* Write the alt label and the action. */
+		/* Write the match label and the action. */
 		if ( lma->lmId < 0 )
-			ret << "      _ {\n";
+			ret << "      _ => {\n";
 		else
-			ret << "      " << lma->lmId << " {\n";
+			ret << "      " << lma->lmId << " => {\n";
 
 		/* Write the block and close it off. */
 		ret << "        {";
@@ -1589,7 +1591,10 @@ void RustTabCodeGen::LM_SWITCH( ostream &ret, GenInlineItem *item,
 		ret << "      }\n";
 	}
 
-	ret << 
+  ret <<
+	"        _ => fail!()";
+
+	ret <<
 		"    }\n"
 		"    ";
 }
@@ -1603,7 +1608,7 @@ void RustTabCodeGen::SET_TOKEND( ostream &ret, GenInlineItem *item )
 {
 	/* The tokend action sets tokend. */
 	ret << TOKEND() << " = " << P();
-	if ( item->offset != 0 ) 
+	if ( item->offset != 0 )
 		out << "+" << item->offset;
 	out << ";";
 }
@@ -1628,7 +1633,7 @@ void RustTabCodeGen::SET_TOKSTART( ostream &ret, GenInlineItem *item )
 	ret << TOKSTART() << " = " << P() << ";";
 }
 
-void RustTabCodeGen::SUB_ACTION( ostream &ret, GenInlineItem *item, 
+void RustTabCodeGen::SUB_ACTION( ostream &ret, GenInlineItem *item,
 		int targState, bool inFinish )
 {
 	if ( item->children->length() > 0 ) {
@@ -1689,7 +1694,7 @@ void RustTabCodeGen::writeInit()
 		out << "        " << TOP() << " = 0;\n";
 
 	if ( hasLongestMatch ) {
-		out << 
+		out <<
 			"        " << TOKSTART() << " = " << NULL_ITEM() << ";\n"
 			"        " << TOKEND() << " = " << NULL_ITEM() << ";\n"
 			"        " << ACT() << " = 0;\n";

@@ -27,13 +27,13 @@
 // - http://tools.ietf.org/html/rfc3986
 //
 
-use std;
+extern mod std;
 
-import result::{result, ok, err};
-import url_authority::{url, parse_authority};
+mod url_authority;
+use url_authority::{Url, parse_authority};
 
-fn dummy() -> url {
-    {
+fn dummy() -> Url {
+    Url {
         scheme: ~"", user: ~"", pass: ~"", host: ~"", port: 0, 
         params: ~"", path: ~"", query: ~"", fragment: ~"",
     }
@@ -50,7 +50,7 @@ fn dummy() -> url {
 // performs in a predictable manner (for security/soft-realtime,)
 // doesn't modify your `data` buffer, and under no circumstances will
 // it panic (i hope!)
-fn url_parse(data: ~[u8]) -> result<url, @~str> {
+fn url_parse(data: &[u8]) -> Result<Url, ~str> {
     let mut cs: int;
     let mut p = 0;
     let mut pe = data.len();
@@ -59,7 +59,7 @@ fn url_parse(data: ~[u8]) -> result<url, @~str> {
     let mut url = dummy();
    
     // this buffer is so we can unescape while we roll
-    let mut buf = vec::to_mut(vec::from_elem(data.len(), 0));
+    let mut buf = vec::from_elem(data.len(), 0);
 
     let mut hex = 0;
     let mut amt = 0;
@@ -71,16 +71,16 @@ fn url_parse(data: ~[u8]) -> result<url, @~str> {
         action str_lower { buf[amt] = fc + 0x20; amt += 1;        }
 
         action hex_hi {
-            hex = alt char::to_digit(fc as char, 16) {
-              none { ret err(@~"invalid hex"); }
-              some(hex) { hex * 16 }
+            hex = match char::to_digit(fc as char, 16) {
+              None => return Err(~"invalid hex"),
+              Some(hex) => hex * 16,
             }
         }
 
         action hex_lo {
-            hex += alt char::to_digit(fc as char, 16) {
-              none { ret err(@~"invalid hex"); }
-              some(hex) { hex }
+            hex += match char::to_digit(fc as char, 16) {
+              None => return Err(~"invalid hex"),
+              Some(hex) => hex,
             };
             buf[amt] = hex as u8;
             amt += 1;
@@ -91,12 +91,11 @@ fn url_parse(data: ~[u8]) -> result<url, @~str> {
         }
 
         action authority {
-            let v = vec::view(data, mark, p);
-            let authority = parse_authority(url, v);
-            if authority.is_err() {
-                ret err(authority.get_err());
+            let v = data.view(mark, p);
+            match parse_authority(&mut url, v) {
+                Ok(()) => { },
+                Err(e) => return Err(e),
             }
-            url = result::unwrap(authority);
         }
 
         action path     {
@@ -147,12 +146,12 @@ fn url_parse(data: ~[u8]) -> result<url, @~str> {
 
     if cs < url_first_final {
         if p == pe {
-            err(@~"unexpected eof")
+            Err(~"unexpected eof")
         } else {
-            err(@#fmt("error in url at pos %u", p))
+            Err(fmt!("error in url at pos %u", p))
         }
     } else {
-        ok(url)
+        Ok(url)
     }
 }
 
@@ -160,13 +159,14 @@ fn url_parse(data: ~[u8]) -> result<url, @~str> {
 
 #[cfg(test)]
 mod tests {
-    import std::time;
+    use super::*;
+    use std::time;
 
     #[test]
     fn test() {
         let data = [(
             ~"http://user:pass@example.com:80;hello/lol.php?fun#omg",
-            {
+            Url {
                 scheme: ~"http",
                 user: ~"user",
                 pass: ~"pass",
@@ -179,129 +179,129 @@ mod tests {
             }
         ), (
             ~"a:b",
-            {
+            Url {
                 scheme: ~"a",
                 host: ~"b",
-                with dummy()
+                .. dummy()
             }
         ), (
             ~"GoPHeR://@example.com@:;/?#",
-            {
+            Url {
                 scheme: ~"gopher",
                 host: ~"@example.com@",
                 path: ~"/",
-                with dummy()
+                .. dummy()
             }
         ), (
             ~"ldap://[2001:db8::7]/c=GB?objectClass/?one",
-            {
+            Url {
                 scheme: ~"ldap",
                 host: ~"2001:db8::7",
                 path: ~"/c=GB",
                 query: ~"objectClass/?one",
-                with dummy()
+                .. dummy()
             }
         ), (
 
             ~"http://user@example.com",
-            {
+            Url {
                 scheme: ~"http",
                 user: ~"user",
                 host: ~"example.com",
-                with dummy()
+                .. dummy()
             }
         ), (
 
             ~"http://品研发和研发管@☃.com:65000;%20",
-            {
+            Url {
                 scheme: ~"http",
                 user: ~"品研发和研发管",
                 host: ~"☃.com",
                 port: 65000,
                 params: ~"%20",
-                with dummy()
+                .. dummy()
             }
         ), (
 
             ~"https://example.com:80",
-            {
+            Url {
                 scheme: ~"https",
                 host: ~"example.com",
                 port: 80,
-                with dummy()
+                .. dummy()
             }
         ), (
 
             ~"file:///etc/passwd",
-            {
+            Url {
                 scheme: ~"file",
                 path: ~"/etc/passwd",
-                with dummy()
+                .. dummy()
             }
         ), (
 
             ~"file:///c:/WINDOWS/clock.avi",
-            {
+            Url {
                 scheme: ~"file",
                 path: ~"/c:/WINDOWS/clock.avi", /* <-- is this kosher? */
-                with dummy()
+                .. dummy()
             }
         ), (
 
             ~"file://hostname/path/to/the%20file.txt",
-            {
+            Url {
                 scheme: ~"file",
                 host: ~"hostname",
                 path: ~"/path/to/the file.txt",
-                with dummy()
+                .. dummy()
             }
         ), (
 
             ~"sip:example.com",
-            {
+            Url {
                 scheme: ~"sip",
                 host: ~"example.com",
-                with dummy()
+                .. dummy()
             }
         ), (
 
             ~"sip:example.com:5060",
-            {
+            Url {
                 scheme: ~"sip",
                 host: ~"example.com",
                 port: 5060,
-                with dummy()
+                .. dummy()
             }
         ), (
 
             ~"mailto:ditto@pokémon.com",
-            {
+            Url {
                 scheme: ~"mailto",
                 user: ~"ditto",
                 host: ~"pokémon.com",
-                with dummy()
+                .. dummy()
             }
         ), (
 
             ~"sip:[dead:beef::666]:5060",
-            {
+            Url {
                 scheme: ~"sip",
                 host: ~"dead:beef::666",
                 port: 5060,
-                with dummy()
+                .. dummy()
             }
         ), (
 
             ~"tel:+12126660420",
-            {
+            Url {
                 scheme: ~"tel",
                 host: ~"+12126660420",
-                with dummy()
+                .. dummy()
             }
         ), (
 
             ~"sip:bob%20barker:priceisright@[dead:beef::666]:5060;isup-oli=00/palfun.html?haha#omg",
-            {
+            Url {
                 scheme: ~"sip",
                 user: ~"bob barker",
                 pass: ~"priceisright",
@@ -311,28 +311,28 @@ mod tests {
                 path: ~"/palfun.html",
                 query: ~"haha",
                 fragment: ~"omg",
-                with dummy()
+                .. dummy()
             }
         ), (
 
             ~"http://www.google.com/search?%68l=en&safe=off&q=omfg&aq=f&aqi=g2g-s1g1g-s1g5&aql=&oq=&gs_rfai=",
-            {
+            Url {
                 scheme: ~"http",
                 host: ~"www.google.com",
                 path: ~"/search",
                 query: ~"%68l=en&safe=off&q=omfg&aq=f&aqi=g2g-s1g1g-s1g5&aql=&oq=&gs_rfai=",
-                with dummy()
+                .. dummy()
             }
         )];
 
         for data.each |data| {
-            alt data {
-              (s, expected) {
-                alt url_parse(str::bytes(s)) {
-                  err(e) { fail *e; }
-                  ok(url) { assert expected == url; }
+            match *data {
+                (ref s, ref expected) => {
+                    match url_parse(str::as_bytes_slice(*s)) {
+                        Err(e) => fail!(e),
+                        Ok(url) => assert *expected == url,
+                    }
                 }
-              }
             }
         }
     }
@@ -340,7 +340,7 @@ mod tests {
     #[test]
     fn benchmark() {
         let rounds = 100000;
-        let urls = [
+        let urls = ~[
             ~"a:a",
             ~"http://google.com/",
             ~"sip:jtunney@lobstertech.com",
@@ -351,13 +351,13 @@ mod tests {
         for urls.each |url| {
             let t1 = time::precise_time_ns();
             for rounds.times {
-                url_parse(str::bytes(url));
+                url_parse(str::as_bytes_slice(*url));
             }
             let t2 = time::precise_time_ns();
 
-            io::println(#fmt("BENCH parse %s -> %f ns",
-                             url,
-                             ((t2 - t1) as float) / (rounds as float)));
+            io::println(fmt!("BENCH parse %s -> %f ns",
+                *url,
+                ((t2 - t1) as float) / (rounds as float)));
         }
     }
 }

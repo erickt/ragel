@@ -2,6 +2,8 @@
  * Show off concurrent abilities.
  */
 
+use io::WriterUtil;
+
 %%{
     machine concurrent;
 
@@ -13,14 +15,14 @@
         self.start_word = self.cur_char;
     }
     action end_word {
-        io::println(#fmt("word: %i %i", self.start_word, self.cur_char - 1));
+        io::println(fmt!("word: %i %i", self.start_word, self.cur_char - 1));
     }
 
     action start_comment {
         self.start_comment = self.cur_char;
     }
     action end_comment {
-        io::println(#fmt("comment: %i %i", self.start_comment,
+        io::println(fmt!("comment: %i %i", self.start_comment,
                          self.cur_char - 1));
     }
 
@@ -28,7 +30,7 @@
         self.start_literal = self.cur_char;
     }
     action end_literal {
-        io::println(#fmt("literal: %i %i", self.start_literal,
+        io::println(fmt!("literal: %i %i", self.start_literal,
                          self.cur_char - 1));
     }
 
@@ -55,25 +57,29 @@
 
 const BUFSIZE: uint = 2048u;
 
-class concurrent {
-    let mut cur_char: int;
-    let mut start_word: int;
-    let mut start_comment: int;
-    let mut start_literal: int;
+struct Concurrent {
+    mut cur_char: int,
+    mut start_word: int,
+    mut start_comment: int,
+    mut start_literal: int,
 
-    let mut cs: int;
+    mut cs: int,
+}
 
-    new() {
+impl Concurrent {
+    static fn new() -> Concurrent {
         let mut cs: int;
         %% write init;
-        self.cs = cs;
-        self.cur_char = 0;
-        self.start_word = 0;
-        self.start_comment = 0;
-        self.start_literal = 0;
+        Concurrent {
+            cs: cs,
+            cur_char: 0,
+            start_word: 0,
+            start_comment: 0,
+            start_literal: 0,
+        }
     }
 
-    fn execute(data: ~[const u8], len: uint, is_eof: bool) -> int {
+    fn execute(&self, data: &[const u8], len: uint, is_eof: bool) -> int {
         let mut p = 0;
         let pe = len;
         let eof = if is_eof { pe } else { 0 };
@@ -87,7 +93,7 @@ class concurrent {
         self.finish()
     }
 
-    fn finish() -> int {
+    fn finish(&self) -> int {
         if self.cs == concurrent_error {
             -1
         } else if self.cs >= concurrent_first_final {
@@ -99,9 +105,9 @@ class concurrent {
 }
 
 fn main() {
-    let mut buf = vec::to_mut(vec::from_elem(BUFSIZE, 0));
+    let mut buf = vec::from_elem(BUFSIZE, 0);
 
-    let concurrent = concurrent();
+    let concurrent = Concurrent::new();
 
     loop {
         let len = io::stdin().read(buf, BUFSIZE);

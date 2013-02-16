@@ -7,8 +7,6 @@
 //
 */
 
-import result::{result, ok, err};
-
 %% machine url_authority;
 %% write data;
 
@@ -38,7 +36,8 @@ import result::{result, ok, err};
 // who would have thought this could be so hard ._.
 */
 
-type url = {
+#[deriving_eq]
+pub struct Url {
     scheme   : ~str, /* http, sip, file, etc. (never blank, always lowercase) */
     user     : ~str, /* who is you */
     pass     : ~str, /* for like, logging in */
@@ -48,10 +47,9 @@ type url = {
     path     : ~str, /* stuff starting with '/' */
     query    : ~str, /* stuff after '?' (NOT UNESCAPED) */
     fragment : ~str, /* stuff after '#' */
-};
+}
 
-fn parse_authority(-url: url, data: &[u8]) -> result<url, @~str> {
-    let mut url <- url;
+pub fn parse_authority(url: &mut Url, data: &[u8]) -> Result<(), ~str> {
     let mut cs: int;
     let mut p = 0;
     let mut pe = data.len();
@@ -68,18 +66,18 @@ fn parse_authority(-url: url, data: &[u8]) -> result<url, @~str> {
     let mut b2 = ~"";
 
     // this buffer is so we can unescape while we roll
-    let mut buf = vec::to_mut(vec::from_elem(data.len(), 0));
+    let mut buf = vec::from_elem(data.len(), 0);
 
     let mut hex = 0;
     let mut amt = 0;
 
-    fn parse_port(s: ~str) -> option<u16> {
+    fn parse_port(s: &str) -> Option<u16> {
         if s != ~"" {
-            do uint::from_str(s).chain |port| {
-                if port > 65535 { none } else { some(port as u16) }
+            do uint::from_str(s).chain_ref |port| {
+                if *port > 65535 { None } else { Some(*port as u16) }
             }
         } else {
-            some(0)
+            Some(0)
         }
     }
 
@@ -90,16 +88,16 @@ fn parse_authority(-url: url, data: &[u8]) -> result<url, @~str> {
             buf[amt] = fc; amt += 1; }
 
         action hex_hi {
-            hex = alt char::to_digit(fc as char, 16) {
-              none { ret err(@~"invalid hex"); }
-              some(hex) { hex * 16 }
+            hex = match char::to_digit(fc as char, 16) {
+              None => return Err(~"invalid hex"),
+              Some(hex) => hex * 16,
             }
         }
 
         action hex_lo {
-            hex += alt char::to_digit(fc as char, 16) {
-              none { ret err(@~"invalid hex"); }
-              some(hex) { hex }
+            hex += match char::to_digit(fc as char, 16) {
+              None => return Err(~"invalid hex"),
+              Some(hex) => hex,
             };
             buf[amt] = hex as u8;
             amt += 1;
@@ -121,12 +119,12 @@ fn parse_authority(-url: url, data: &[u8]) -> result<url, @~str> {
         }
 
         action copy_port {
-            alt parse_port(b2) {
-              none { 
-                ret err(@#fmt("bad url authority: %s",
-                              str::from_bytes(data.slice(0, data.len()))))
-              }
-              some(port) { url.port = port; }
+            match parse_port(b2) {
+                None => {
+                    return Err(fmt!("bad url authority: %s",
+                        str::from_bytes(data.slice(0, data.len()))))
+                }
+                Some(port) => url.port = port,
             }
         }
 
@@ -138,7 +136,7 @@ fn parse_authority(-url: url, data: &[u8]) -> result<url, @~str> {
         action params_eof {
             let params = str::from_bytes(data.slice(mark, p));
             url.params = params;
-            ret ok(url)
+            return Ok(());
         }
 
         action atsymbol {
@@ -156,16 +154,16 @@ fn parse_authority(-url: url, data: &[u8]) -> result<url, @~str> {
                 if amt > 0 {
                     b2 = str::from_bytes(buf.slice(0, amt));
                 }
-                alt parse_port(b2) {
-                  none {
-                    ret err(@#fmt("bad url authority: %s",
-                                  str::from_bytes(data.slice(0, data.len()))))
-                  }
-                  some(port) { url.port = port; }
+                match parse_port(b2) {
+                    None => {
+                        return Err(fmt!("bad url authority: %s",
+                            str::from_bytes(data.slice(0, data.len()))))
+                    }
+                    Some(port) => url.port = port,
                 }
             }
 
-            ret ok(url)
+            return Ok(());
         }
 
         # define what a single character is allowed to be
@@ -210,5 +208,5 @@ fn parse_authority(-url: url, data: &[u8]) -> result<url, @~str> {
         write exec;
     }%%
 
-    ok(url)
+    Ok(())
 }

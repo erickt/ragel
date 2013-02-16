@@ -42,23 +42,27 @@
 
 %% write data;
 
-class goto_call_ret {
-    let mut comm: u8;
-    let mut cs: int;
-    let mut top: int;
-    let mut stack: @~[mut int];
+struct GotoCallRet {
+    mut comm: u8,
+    mut cs: int,
+    mut top: int,
+    mut stack: ~[int],
+}
 
-    new() {
+impl GotoCallRet {
+    static fn new() -> GotoCallRet {
         let cs: int;
         let top: int;
         %% write init;
-        self.cs = cs;
-        self.comm = 0;
-        self.top = top;
-        self.stack = @vec::to_mut(vec::from_elem(32, 0));
+        GotoCallRet {
+            cs: cs,
+            comm: 0,
+            top: top,
+            stack: vec::from_elem(32, 0),
+        }
     }
 
-    fn execute(data: &[const u8], is_eof: bool) -> int {
+    fn execute(&self, data: &[const u8], is_eof: bool) -> int {
         let mut p = 0;
         let mut pe = data.len();
         let mut eof = if is_eof { data.len() } else { 0 };
@@ -66,14 +70,13 @@ class goto_call_ret {
         let mut cs = self.cs;
         let mut comm = self.comm;
         let mut top = self.top;
-        let mut stack = self.stack;
+        let stack = &mut self.stack;
 
         %% write exec;
 
         self.cs = cs;
         self.comm = comm;
         self.top = top;
-        self.stack = stack;
 
         if self.cs == GotoCallRet_error {
             -1
@@ -86,20 +89,19 @@ class goto_call_ret {
 }
 
 fn main() {
-    let mut buf = vec::to_mut(vec::from_elem(1024, 0));
-
-    let gcr = goto_call_ret();
+    let mut buf = vec::from_elem(1024, 0);
+    let gcr = GotoCallRet::new();
 
     loop {
         let count = io::stdin().read(buf, buf.len());
         if count == 0 { break; }
 
-        gcr.execute(vec::mut_view(buf, 0, count), false);
+        gcr.execute(vec::mut_slice(buf, 0, count), false);
     }
 
     gcr.execute(~[], true);
 
     if gcr.cs < GotoCallRet_first_final {
-        fail ~"gotocallret: error: parsing input";
+        fail!(~"gotocallret: error: parsing input");
     }
 }

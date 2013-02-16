@@ -23,9 +23,10 @@
   write data;
 }%%
 
-fn main() {
-    enum expect { Pat1, Pat2, Any }
+#[deriving_eq]
+enum expect { Pat1, Pat2, Any }
 
+fn main() {
     let mut i = 0;
     let mut expect = ~[Pat1, Any, Pat2, Any, Any, Any];
 

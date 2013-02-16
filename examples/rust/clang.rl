@@ -22,25 +22,25 @@
     # Symbols. Upon entering clear the buffer. On all transitions
     # buffer a character. Upon leaving dump the symbol.
     ( punct - [_'"] ) {
-        io::println(#fmt("symbol(%i): %c", curlin, data[ts] as char));
+        io::println(fmt!("symbol(%i): %c", curlin, data[ts] as char));
     };
 
     # Identifier. Upon entering clear the buffer. On all transitions
     # buffer a character. Upon leaving, dump the identifier.
     alpha_u alnum_u* {
-        io::println(#fmt("ident(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
+        io::println(fmt!("ident(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
     };
 
     # Single Quote.
     sliteralChar = [^'\\] | newline | ( '\\' . any_count_line );
     '\'' . sliteralChar* . '\'' {
-        io::println(#fmt("single_lit(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
+        io::println(fmt!("single_lit(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
     };
 
     # Double Quote.
     dliteralChar = [^"\\] | newline | ( '\\' any_count_line );
     '"' . dliteralChar* . '"' {
-        io::println(#fmt("double_lit(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
+        io::println(fmt!("double_lit(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
     };
 
     # Whitespace is standard ws, newlines and control codes.
@@ -56,19 +56,19 @@
     # Match an integer. We don't bother clearing the buf or filling it.
     # The float machine overlaps with int and it will do it.
     digit+ {
-        io::println(#fmt("int(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
+        io::println(fmt!("int(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
     };
 
     # Match a float. Upon entering the machine clear the buf, buffer
     # characters on every trans and dump the float upon leaving.
     digit+ '.' digit+ {
-        io::println(#fmt("float(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
+        io::println(fmt!("float(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
     };
 
     # Match a hex. Upon entering the hex part, clear the buf, buffer characters
     # on every trans and dump the hex on leaving transitions.
     '0x' xdigit+ {
-        io::println(#fmt("hex(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
+        io::println(fmt!("hex(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
     };
 
     *|;
@@ -79,7 +79,7 @@
 const BUFSIZE: uint = 2048;
 
 fn main() {
-    let mut data = vec::to_mut(vec::from_elem(BUFSIZE, 0));
+    let mut data = vec::from_elem(BUFSIZE, 0);
 
     let mut cs = 0;
     let mut act = 0;
@@ -99,11 +99,10 @@ fn main() {
         if space == 0 {
           /* We've used up the entire buffer storing an already-parsed token
            * prefix that must be preserved. */
-          fail ~"OUT OF BUFFER SPACE";
+          fail!(~"OUT OF BUFFER SPACE");
         }
 
-        let pe = io::stdin().read(vec::mut_view(data, have, data.len()),
-                                  space);
+        let pe = io::stdin().read(vec::mut_slice(data, have, data.len()), space);
 
         /* Check if this is the end of file. */
         if pe < space {
@@ -114,7 +113,7 @@ fn main() {
         %% write exec;
 
         if cs == clang_error {
-            fail ~"PARSE ERROR";
+            fail!(~"PARSE ERROR");
         }
 
         if ts == -1 {
@@ -122,7 +121,7 @@ fn main() {
         } else {
             /* There is a prefix to preserve, shift it over. */
             have = pe - ts;
-            vec::u8::memmove(data, vec::view(data, ts, pe), have);
+            vec::bytes::copy_memory(data, vec::const_slice(data, ts, pe), have);
             te = te - ts;
             ts = 0;
         }

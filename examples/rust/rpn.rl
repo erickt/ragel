@@ -17,34 +17,36 @@
 //   chrome rpn.png
 //
 
-use std;
-import result::{result, ok, err};
+extern mod std;
 
 %% machine rpn;
 %% write data;
 
-fn rpn(data: ~str) -> result<int, ~str> {
+fn rpn(data: &str) -> Result<int, ~str> {
     let mut cs = 0;
     let mut p = 0;
     let mut pe = data.len();
     let mut mark = 0;
-    let mut st: ~[int] = ~[];
+    let mut st = ~[];
 
     %%{
         action mark { mark = p; }
         action push {
             let s = data.slice(mark, p);
-            alt int::from_str(s) {
-              none { ret err(#fmt("invalid integer %s", s)); }
-              some(i) { vec::push(st, i); }
+            match int::from_str(s) {
+              None => return Err(fmt!("invalid integer %s", s)),
+              Some(i) => st.push(i),
             }
         }
-        action add  { let y = vec::pop(st); let x = vec::pop(st); vec::push(st, x + y); }
-        action sub  { let y = vec::pop(st); let x = vec::pop(st); vec::push(st, x - y); }
-        action mul  { let y = vec::pop(st); let x = vec::pop(st); vec::push(st, x * y); }
-        action div  { let y = vec::pop(st); let x = vec::pop(st); vec::push(st, x / y); }
-        action abs  { vec::push(st, int::abs(vec::pop(st))); }
-        action abba { vec::push(st, 666); }
+        action add  { let y = st.pop(); let x = st.pop(); st.push(x + y); }
+        action sub  { let y = st.pop(); let x = st.pop(); st.push(x - y); }
+        action mul  { let y = st.pop(); let x = st.pop(); st.push(x * y); }
+        action div  { let y = st.pop(); let x = st.pop(); st.push(x / y); }
+        action abs  {
+            let x = vec::pop(&mut st);
+            vec::push(&mut st, int::abs(x));
+        }
+        action abba { st.push(666); }
 
         stuff  = digit+ >mark %push
                | '+' @add
@@ -64,56 +66,52 @@ fn rpn(data: ~str) -> result<int, ~str> {
 
     if cs < rpn_first_final {
         if p == pe {
-            ret err(~"unexpected eof");
+            Err(~"unexpected eof")
         } else {
-            //ret err(#fmt("error at position %i", p));
-            ret err(~"error at position %i");
+            Err(fmt!("error at position %u", p))
         }
-    }
-
-    if st.is_empty() {
-        ret err(~"rpn stack empty on result");
+    } else if st.is_empty() {
+        Err(~"rpn stack empty on result")
     } else {
-        ret ok(vec::pop(st))
+        Ok(st.pop())
     }
 }
 
 //////////////////////////////////////////////////////////////////////
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_success() {
-        let rpnTests = [
-            (~"666\n", 666),
-            (~"666 111\n", 111),
-            (~"4 3 add\n", 7),
-            (~"4 3 +\n", 7),
-            (~"4 3 -\n", 1),
-            (~"4 3 *\n", 12),
-            (~"6 2 /\n", 3),
-            (~"0 3 -\n", -3),
-            (~"0 3 - abs\n", 3),
-            (~" 2  2 + 3 - \n", 1),
-            (~"10 7 3 2 * - +\n", 11),
-            (~"abba abba add\n", 1332),
-        ];
+#[test]
+fn test_success() {
+    let rpnTests = [
+        (~"666\n", 666),
+        (~"666 111\n", 111),
+        (~"4 3 add\n", 7),
+        (~"4 3 +\n", 7),
+        (~"4 3 -\n", 1),
+        (~"4 3 *\n", 12),
+        (~"6 2 /\n", 3),
+        (~"0 3 -\n", -3),
+        (~"0 3 - abs\n", 3),
+        (~" 2  2 + 3 - \n", 1),
+        (~"10 7 3 2 * - +\n", 11),
+        (~"abba abba add\n", 1332),
+    ];
 
-        for rpnTests.each |sx| {
-            let (s, x) = sx;
-            assert rpn(s).get() == x;
+    for rpnTests.each |sx| {
+        match *sx {
+            (ref s, x) => assert rpn(*s).get() == x,
         }
     }
+}
 
-    #[test]
-    fn test_failure() {
-        let rpnFailTests = [
-            (~"\n", ~"rpn stack empty on result")
-        ];
+#[test]
+fn test_failure() {
+    let rpnFailTests = [
+        (~"\n", ~"rpn stack empty on result")
+    ];
 
-        for rpnFailTests.each |sx| {
-            let (s, x) = sx;
-            assert rpn(s).get_err() == x;
+    for rpnFailTests.each |sx| {
+        match *sx {
+            (ref s, ref x) => assert rpn(*s).get_err() == *x,
         }
     }
 }
