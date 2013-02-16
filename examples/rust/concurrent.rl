@@ -58,12 +58,11 @@ use io::WriterUtil;
 const BUFSIZE: uint = 2048u;
 
 struct Concurrent {
-    mut cur_char: int,
-    mut start_word: int,
-    mut start_comment: int,
-    mut start_literal: int,
-
-    mut cs: int,
+    cur_char: int,
+    start_word: int,
+    start_comment: int,
+    start_literal: int,
+    cs: int,
 }
 
 impl Concurrent {
@@ -79,7 +78,7 @@ impl Concurrent {
         }
     }
 
-    fn execute(&self, data: &[const u8], len: uint, is_eof: bool) -> int {
+    fn execute(&mut self, data: &[const u8], len: uint, is_eof: bool) -> int {
         let mut p = 0;
         let pe = len;
         let eof = if is_eof { pe } else { 0 };
@@ -106,8 +105,7 @@ impl Concurrent {
 
 fn main() {
     let mut buf = vec::from_elem(BUFSIZE, 0);
-
-    let concurrent = Concurrent::new();
+    let mut concurrent = Concurrent::new();
 
     loop {
         let len = io::stdin().read(buf, BUFSIZE);

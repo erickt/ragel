@@ -10,6 +10,9 @@
 %%{
 	machine GotoCallRet;
 
+	access self.;
+	getkey data[p];
+
 	# Error machine, consumes to end of 
 	# line, then starts the main line over.
 	garble_line := (
@@ -23,16 +26,16 @@
 
 	# Choose which to machine to call into based on the command.
 	action comm_arg {
-		if comm >= 'a' as u8 {
+		if self.comm >= 'a' as u8 {
 			fcall alp_comm;
-        } else {
+		} else {
 			fcall dig_comm;
-        }
+		}
 	}
 
 	# Specifies command string. Note that the arg is left out.
 	command = (
-		[a-z0-9] @{comm = fc;} ' ' @comm_arg '\n'
+		[a-z0-9] @{ self.comm = fc; } ' ' @comm_arg '\n'
 	) @{ io::println("correct command"); };
 
 	# Any number of commands. If there is an 
@@ -43,40 +46,30 @@
 %% write data;
 
 struct GotoCallRet {
-    mut comm: u8,
-    mut cs: int,
-    mut top: int,
-    mut stack: ~[int],
+    comm: u8,
+    cs: int,
+    top: int,
+    stack: ~[int],
 }
 
 impl GotoCallRet {
     static fn new() -> GotoCallRet {
-        let cs: int;
-        let top: int;
-        %% write init;
-        GotoCallRet {
-            cs: cs,
+        let mut self = GotoCallRet {
+            cs: 0,
             comm: 0,
-            top: top,
+            top: 0,
             stack: vec::from_elem(32, 0),
-        }
+        };
+        %% write init;
+        self
     }
 
-    fn execute(&self, data: &[const u8], is_eof: bool) -> int {
+    fn execute(&mut self, data: &[const u8], is_eof: bool) -> int {
         let mut p = 0;
         let mut pe = data.len();
         let mut eof = if is_eof { data.len() } else { 0 };
 
-        let mut cs = self.cs;
-        let mut comm = self.comm;
-        let mut top = self.top;
-        let stack = &mut self.stack;
-
         %% write exec;
-
-        self.cs = cs;
-        self.comm = comm;
-        self.top = top;
 
         if self.cs == GotoCallRet_error {
             -1
@@ -90,7 +83,7 @@ impl GotoCallRet {
 
 fn main() {
     let mut buf = vec::from_elem(1024, 0);
-    let gcr = GotoCallRet::new();
+    let mut gcr = GotoCallRet::new();
 
     loop {
         let count = io::stdin().read(buf, buf.len());
