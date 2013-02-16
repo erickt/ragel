@@ -28,5 +28,5 @@ url_authority.dot: url_authority.rl
 
 clean:       ; rm -f *.go *.dot atoi rpn url
 %: %.go      ; go build -o $@ $^
-%.go: %.rl   ; $(ragel) -Z -T0 -o $@ $<
+%.go: %.rl   ; $(ragel) -Z -G2 -o $@ $<
 %.dot: %.rl  ; $(ragel) -V -Z -p -o $@ $<
