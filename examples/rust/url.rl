@@ -59,16 +59,14 @@ fn url_parse(data: &[u8]) -> Result<Url, ~str> {
     let mut url = dummy();
    
     // this buffer is so we can unescape while we roll
-    let mut buf = vec::from_elem(data.len(), 0);
-
+    let mut buf = vec::with_capacity(16);
     let mut hex = 0;
-    let mut amt = 0;
 
     %%{
-        action mark      { mark = p;                              }
-        action str_start { amt = 0;                               }
-        action str_char  { buf[amt] = fc; amt += 1;               }
-        action str_lower { buf[amt] = fc + 0x20; amt += 1;        }
+        action mark      { mark = p;                  }
+        action str_start { buf.clear();               }
+        action str_char  { buf.push(fc);              }
+        action str_lower { buf.push(fc + 0x20)        }
 
         action hex_hi {
             hex = match char::to_digit(fc as char, 16) {
@@ -82,12 +80,11 @@ fn url_parse(data: &[u8]) -> Result<Url, ~str> {
               None => return Err(~"invalid hex"),
               Some(hex) => hex,
             };
-            buf[amt] = hex as u8;
-            amt += 1;
+            buf.push(hex as u8);
         }
 
         action scheme {
-            url.scheme = str::from_bytes(buf.slice(0, amt));
+            url.scheme = str::from_bytes(buf);
         }
 
         action authority {
@@ -99,7 +96,7 @@ fn url_parse(data: &[u8]) -> Result<Url, ~str> {
         }
 
         action path     {
-            url.path = str::from_bytes(buf.slice(0, amt));
+            url.path = str::from_bytes(buf);
         }
 
         action query {
@@ -107,7 +104,7 @@ fn url_parse(data: &[u8]) -> Result<Url, ~str> {
         }
 
         action fragment {
-            url.fragment = str::from_bytes(buf.slice(0, amt));
+            url.fragment = str::from_bytes(buf);
         }
 
         # define what a single character is allowed to be
@@ -243,7 +240,7 @@ mod tests {
             ~"file:///c:/WINDOWS/clock.avi",
             Url {
                 scheme: ~"file",
-                path: ~"/c:/WINDOWS/clock.avi", /* <-- is this kosher? */
+                path: ~"/c:/WINDOWS/clock.avi", // <-- is this kosher?
                 .. dummy()
             }
         ), (

@@ -38,15 +38,15 @@
 
 #[deriving_eq]
 pub struct Url {
-    scheme   : ~str, /* http, sip, file, etc. (never blank, always lowercase) */
-    user     : ~str, /* who is you */
-    pass     : ~str, /* for like, logging in */
-    host     : ~str, /* IP 4/6 address or hostname (mandatory) */
-    port     : u16,  /* like 80 or 5060 (default 0) */
-    params   : ~str, /* stuff after ';' (NOT UNESCAPED, used in sip) */
-    path     : ~str, /* stuff starting with '/' */
-    query    : ~str, /* stuff after '?' (NOT UNESCAPED) */
-    fragment : ~str, /* stuff after '#' */
+    scheme   : ~str, // http, sip, file, etc. (never blank, always lowercase)
+    user     : ~str, // who is you
+    pass     : ~str, // for like, logging in
+    host     : ~str, // IP 4/6 address or hostname (mandatory)
+    port     : u16,  // like 80 or 5060
+    params   : ~str, // stuff after ';' (NOT UNESCAPED, used in sip)
+    path     : ~str, // stuff starting with '/'
+    query    : ~str, // stuff after '?' (NOT UNESCAPED)
+    fragment : ~str, // stuff after '#'
 }
 
 pub fn parse_authority(url: &mut Url, data: &[u8]) -> Result<(), ~str> {
@@ -66,10 +66,8 @@ pub fn parse_authority(url: &mut Url, data: &[u8]) -> Result<(), ~str> {
     let mut b2 = ~"";
 
     // this buffer is so we can unescape while we roll
-    let mut buf = vec::from_elem(data.len(), 0);
-
+    let mut buf = vec::with_capacity(16);
     let mut hex = 0;
-    let mut amt = 0;
 
     fn parse_port(s: &str) -> Option<u16> {
         if s != ~"" {
@@ -82,10 +80,9 @@ pub fn parse_authority(url: &mut Url, data: &[u8]) -> Result<(), ~str> {
     }
 
     %%{
-        action mark      { mark = p;                }
-        action str_start { amt = 0;                 }
-        action str_char  {
-            buf[amt] = fc; amt += 1; }
+        action mark      { mark = p;     }
+        action str_start { buf.clear();  }
+        action str_char  { buf.push(fc); }
 
         action hex_hi {
             hex = match char::to_digit(fc as char, 16) {
@@ -99,24 +96,12 @@ pub fn parse_authority(url: &mut Url, data: &[u8]) -> Result<(), ~str> {
               None => return Err(~"invalid hex"),
               Some(hex) => hex,
             };
-            buf[amt] = hex as u8;
-            amt += 1;
+            buf.push(hex as u8);
         }
 
-        action copy_b1 {
-            b1 = str::from_bytes(buf.slice(0, amt));
-            amt = 0;
-        }
-
-        action copy_b2 {
-            b2 = str::from_bytes(buf.slice(0, amt));
-            amt = 0;
-        }
-
-        action copy_host {
-            url.host = copy b1;
-            amt = 0;
-        }
+        action copy_b1   { b1 = str::from_bytes(buf); buf.clear(); }
+        action copy_b2   { b2 = str::from_bytes(buf); buf.clear(); }
+        action copy_host { url.host = copy b1; buf.clear();        }
 
         action copy_port {
             match parse_port(b2) {
@@ -149,10 +134,10 @@ pub fn parse_authority(url: &mut Url, data: &[u8]) -> Result<(), ~str> {
             url.host = copy b1;
 
             if url.host == ~"" {
-                url.host = str::from_bytes(buf.slice(0, amt));
+                url.host = str::from_bytes(buf);
             } else {
-                if amt > 0 {
-                    b2 = str::from_bytes(buf.slice(0, amt));
+                if buf.len() > 0 {
+                    b2 = str::from_bytes(buf);
                 }
                 match parse_port(b2) {
                     None => {
