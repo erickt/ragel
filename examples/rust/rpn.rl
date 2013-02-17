@@ -42,10 +42,7 @@ fn rpn(data: &str) -> Result<int, ~str> {
         action sub  { let y = st.pop(); let x = st.pop(); st.push(x - y); }
         action mul  { let y = st.pop(); let x = st.pop(); st.push(x * y); }
         action div  { let y = st.pop(); let x = st.pop(); st.push(x / y); }
-        action abs  {
-            let x = vec::pop(&mut st);
-            vec::push(&mut st, int::abs(x));
-        }
+        action abs  { let x = st.pop(); st.push(int::abs(x));             }
         action abba { st.push(666); }
 
         stuff  = digit+ >mark %push
