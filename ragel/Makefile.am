@@ -26,7 +26,8 @@ ragel_SOURCES = \
 	csipgoto.cpp cssplit.cpp dotcodegen.cpp xmlcodegen.cpp \
 	gocodegen.cpp gotable.cpp goftable.cpp goflat.cpp gofflat.cpp gogoto.cpp gofgoto.cpp \
 	goipgoto.cpp gotablish.cpp \
-	mlcodegen.cpp mltable.cpp mlftable.cpp mlflat.cpp mlfflat.cpp mlgoto.cpp
+	mlcodegen.cpp mltable.cpp mlftable.cpp mlflat.cpp mlfflat.cpp mlgoto.cpp \
+	rustcodegen.h rustcodegen.cc
 
 BUILT_SOURCES = \
 	rlscan.cpp rlparse.h rlparse.cpp version.h

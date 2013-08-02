@@ -70,6 +70,8 @@
 #include "rubyfflat.h"
 #include "rbxgoto.h"
 
+#include "rustcodegen.h"
+
 string itoa( int i )
 {
 	char buf[16];
@@ -356,6 +358,16 @@ CodeGenData *ocamlMakeCodeGen( const char *sourceFileName, const char *fsmName, 
 	return codeGen;
 }
 
+/* Invoked by the parser when a ragel definition is opened. */
+CodeGenData *rustMakeCodeGen( const char *sourceFileName, const char *fsmName, ostream &out )
+{
+	CodeGenData *codeGen = new RustTabCodeGen(out);
+
+	codeGen->sourceFileName = sourceFileName;
+	codeGen->fsmName = fsmName;
+
+  return codeGen;
+}
 
 CodeGenData *makeCodeGen( const char *sourceFileName, const char *fsmName, ostream &out )
 {
@@ -378,6 +390,8 @@ CodeGenData *makeCodeGen( const char *sourceFileName, const char *fsmName, ostre
 		cgd = csharpMakeCodeGen( sourceFileName, fsmName, out );
 	else if ( hostLang == &hostLangOCaml )
 		cgd = ocamlMakeCodeGen( sourceFileName, fsmName, out );
+	else if ( hostLang == &hostLangRust )
+		cgd = rustMakeCodeGen( sourceFileName, fsmName, out );
 	return cgd;
 }
 
@@ -400,6 +414,8 @@ void lineDirective( ostream &out, const char *fileName, int line )
 			csharpLineDirective( out, fileName, line );
 		else if ( hostLang == &hostLangOCaml )
 			ocamlLineDirective( out, fileName, line );
+		else if ( hostLang == &hostLangRust )
+			rustLineDirective( out, fileName, line );
 	}
 }
 

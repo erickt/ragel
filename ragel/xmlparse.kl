@@ -101,9 +101,13 @@ tag_ragel_head: TAG_ragel
 			hostLang = &hostLangCSharp;
 			outStream = csharpOpenOutput( sourceFileName );
 		}
+		else if ( strcmp( langAttr->value, "Rust" ) == 0 ) {
+			hostLang = &hostLangRust;
+			outStream = rustOpenOutput( sourceFileName );
+		}
 		else {
 			error($1->loc) << "expecting lang attribute to be "
-					"one of C, D, Java, Ruby or C#" << endp;
+					"one of C, D, Java, Ruby, C# or Rust" << endp;
 		}
 	};
 

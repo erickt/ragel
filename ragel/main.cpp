@@ -127,6 +127,7 @@ void usage()
 "   -R                   The host language is Ruby\n"
 "   -A                   The host language is C#\n"
 "   -O                   The host language is OCaml\n"
+"   --host-lang=<lang>   The host language (C, D, D2, Go, Java, Ruby, C#, OCaml, Rust)\n"
 "line directives: (C/D/Ruby/C#)\n"
 "   -L                   Inhibit writing of #line directives\n"
 "code style: (C/D/Java/Ruby/C#)\n"
@@ -392,6 +393,8 @@ void processArgs( int argc, const char **argv, InputData &id )
 						hostLang = &hostLangJava;
 					else if ( strcmp ( eq, "ocaml" ) == 0 || strcmp ( eq, "OCaml" ) == 0 )
 						hostLang = &hostLangOCaml;
+					else if ( strcmp ( eq, "rust" ) == 0 || strcmp ( eq, "Rust" ) == 0 )
+						hostLang = &hostLangRust;
 					else
 						error() << "invalid value for language" << endl;
 				}
