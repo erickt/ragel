@@ -370,6 +370,31 @@ void processArgs( int argc, const char **argv, InputData &id )
 				}
 				else if ( strcmp( arg, "rbx" ) == 0 )
 					rubyImpl = Rubinius;
+				else if ( strcmp( arg, "host-lang" ) == 0 ) {
+					if ( eq == 0 )
+						error() << "expecting '=lang' for language" << endl;
+					else if ( strcmp ( eq, "c" ) == 0 || strcmp ( eq, "C" ) == 0 )
+						hostLang = &hostLangC;
+					else if ( strcmp ( eq, "d" ) == 0 || strcmp ( eq, "D" ) == 0 )
+						hostLang = &hostLangD;
+					else if ( strcmp ( eq, "d2" ) == 0 || strcmp ( eq, "D2" ) == 0 )
+						hostLang = &hostLangD2;
+					else if ( strcmp ( eq, "go" ) == 0 || strcmp ( eq, "Go" ) == 0 )
+						hostLang = &hostLangGo;
+					else if ( strcmp ( eq, "java" ) == 0 || strcmp ( eq, "Java" ) == 0 )
+						hostLang = &hostLangJava;
+					else if ( strcmp ( eq, "ruby" ) == 0 || strcmp ( eq, "Ruby" ) == 0 )
+						hostLang = &hostLangJava;
+					else if ( strcmp ( eq, "csharp" ) == 0 || strcmp ( eq, "CSharp" ) == 0 ||
+                    strcmp ( eq, "c#" ) == 0 || strcmp ( eq, "C#" ) == 0 )
+						hostLang = &hostLangJava;
+					else if ( strcmp ( eq, "java" ) == 0 || strcmp ( eq, "Java" ) == 0 )
+						hostLang = &hostLangJava;
+					else if ( strcmp ( eq, "ocaml" ) == 0 || strcmp ( eq, "OCaml" ) == 0 )
+						hostLang = &hostLangOCaml;
+					else
+						error() << "invalid value for language" << endl;
+				}
 				else {
 					error() << "--" << pc.paramArg << 
 							" is an invalid argument" << endl;
