@@ -2,6 +2,10 @@
  * A mini C-like language scanner.
  */
 
+use std::io;
+use std::str;
+use std::vec;
+
 %%{
     machine clang;
 
@@ -76,17 +80,17 @@
 
 %% write data nofinal;
 
-const BUFSIZE: uint = 2048;
+static BUFSIZE: uint = 2048;
 
 fn main() {
-    let mut data = vec::from_elem(BUFSIZE, 0);
+    let mut data = vec::from_elem(BUFSIZE, 0u8);
 
-    let mut cs = 0;
-    let mut act = 0;
+    let mut cs: int;
+    let mut act: uint;
     let mut have = 0;
     let mut curlin = 1;
-    let mut ts = 0;
-    let mut te = 0;
+    let mut ts: uint;
+    let mut te: uint;
     let mut done = false;
 
     %% write init;
@@ -102,7 +106,7 @@ fn main() {
           fail!(~"OUT OF BUFFER SPACE");
         }
 
-        let pe = io::stdin().read(vec::mut_slice(data, have, data.len()), space);
+        let pe = io::stdin().read(data.mut_slice_from(have), space);
 
         /* Check if this is the end of file. */
         if pe < space {
@@ -120,8 +124,11 @@ fn main() {
             have = 0;
         } else {
             /* There is a prefix to preserve, shift it over. */
-            have = pe - ts;
-            vec::bytes::copy_memory(data, vec::const_slice(data, ts, pe), have);
+            let mut i = 0;
+            while i < ts - pe {
+                data[i] = data[ts + i];
+                i += 1;
+            }
             te = te - ts;
             ts = 0;
         }

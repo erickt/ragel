@@ -17,15 +17,15 @@
 //   chrome rpn.png
 //
 
-extern mod std;
+use std::int;
 
 %% machine rpn;
 %% write data;
 
 fn rpn(data: &str) -> Result<int, ~str> {
-    let mut cs = 0;
+    let mut cs: int;
     let mut p = 0;
-    let mut pe = data.len();
+    let pe = data.len();
     let mut mark = 0;
     let mut st = ~[];
 
@@ -42,7 +42,7 @@ fn rpn(data: &str) -> Result<int, ~str> {
         action sub  { let y = st.pop(); let x = st.pop(); st.push(x - y); }
         action mul  { let y = st.pop(); let x = st.pop(); st.push(x * y); }
         action div  { let y = st.pop(); let x = st.pop(); st.push(x / y); }
-        action abs  { let x = st.pop(); st.push(int::abs(x));             }
+        action abs  { let x = st.pop(); st.push(x.abs());                 }
         action abba { st.push(666); }
 
         stuff  = digit+ >mark %push
@@ -93,9 +93,9 @@ fn test_success() {
         (~"abba abba add\n", 1332),
     ];
 
-    for rpnTests.each |sx| {
+    foreach sx in rpnTests.iter() {
         match *sx {
-            (ref s, x) => assert rpn(*s).get() == x,
+            (ref s, x) => assert_eq!(rpn(*s).get(), x),
         }
     }
 }
@@ -106,9 +106,9 @@ fn test_failure() {
         (~"\n", ~"rpn stack empty on result")
     ];
 
-    for rpnFailTests.each |sx| {
+    foreach sx in rpnFailTests.iter() {
         match *sx {
-            (ref s, ref x) => assert rpn(*s).get_err() == *x,
+            (ref s, ref x) => assert_eq!(&rpn(*s).get_err(), x),
         }
     }
 }

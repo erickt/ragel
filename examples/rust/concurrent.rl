@@ -2,7 +2,7 @@
  * Show off concurrent abilities.
  */
 
-use io::WriterUtil;
+use std::io;
 
 %%{
     machine concurrent;
@@ -55,7 +55,7 @@ use io::WriterUtil;
 
 %% write data;
 
-const BUFSIZE: uint = 2048u;
+static BUFSIZE: uint = 2048u;
 
 struct Concurrent {
     cur_char: int,
@@ -66,7 +66,7 @@ struct Concurrent {
 }
 
 impl Concurrent {
-    static fn new() -> Concurrent {
+    fn new() -> Concurrent {
         let mut cs: int;
         %% write init;
         Concurrent {
@@ -104,7 +104,7 @@ impl Concurrent {
 }
 
 fn main() {
-    let mut buf = vec::from_elem(BUFSIZE, 0);
+    let mut buf = [0, .. BUFSIZE];
     let mut concurrent = Concurrent::new();
 
     loop {

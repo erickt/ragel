@@ -7,10 +7,13 @@
  * desitinations.
  */
 
+use std::io;
+use std::vec;
+
 %%{
 	machine GotoCallRet;
 
-	access self.;
+	access self_.;
 	getkey data[p];
 
 	# Error machine, consumes to end of 
@@ -26,7 +29,7 @@
 
 	# Choose which to machine to call into based on the command.
 	action comm_arg {
-		if self.comm >= 'a' as u8 {
+		if self_.comm >= 'a' as u8 {
 			fcall alp_comm;
 		} else {
 			fcall dig_comm;
@@ -35,7 +38,7 @@
 
 	# Specifies command string. Note that the arg is left out.
 	command = (
-		[a-z0-9] @{ self.comm = fc; } ' ' @comm_arg '\n'
+		[a-z0-9] @{ self_.comm = fc; } ' ' @comm_arg '\n'
 	) @{ io::println("correct command"); };
 
 	# Any number of commands. If there is an 
@@ -53,21 +56,22 @@ struct GotoCallRet {
 }
 
 impl GotoCallRet {
-    static fn new() -> GotoCallRet {
-        let mut self = GotoCallRet {
+    fn new() -> GotoCallRet {
+        let mut self_ = GotoCallRet {
             cs: 0,
             comm: 0,
             top: 0,
             stack: vec::from_elem(32, 0),
         };
         %% write init;
-        self
+        self_
     }
 
-    fn execute(&mut self, data: &[const u8], is_eof: bool) -> int {
+    fn execute(&mut self, data: &mut [u8], is_eof: bool) -> int {
+        let self_ = &mut *self;
         let mut p = 0;
-        let mut pe = data.len();
-        let mut eof = if is_eof { data.len() } else { 0 };
+        let pe = data.len();
+        let eof = if is_eof { data.len() } else { 0 };
 
         %% write exec;
 
@@ -82,17 +86,18 @@ impl GotoCallRet {
 }
 
 fn main() {
-    let mut buf = vec::from_elem(1024, 0);
+    let mut buf = [0u8, .. 1024];
     let mut gcr = GotoCallRet::new();
 
     loop {
-        let count = io::stdin().read(buf, buf.len());
+        let len = buf.len();
+        let count = io::stdin().read(buf, len);
         if count == 0 { break; }
 
-        gcr.execute(vec::mut_slice(buf, 0, count), false);
+        gcr.execute(buf.mut_slice(0, count), false);
     }
 
-    gcr.execute(~[], true);
+    gcr.execute([], true);
 
     if gcr.cs < GotoCallRet_first_final {
         fail!(~"gotocallret: error: parsing input");

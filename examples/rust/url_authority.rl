@@ -1,11 +1,18 @@
 /*
-// -*-go-*-
+// -*-rust-*-
 //
 // URL Parser
 // Copyright (c) 2010 J.A. Roberts Tunney
 // MIT License
 //
+// Converted to Rust by Erick Tryzelaar
+//
 */
+
+use std::char;
+use std::str;
+use std::uint;
+use std::vec;
 
 %% machine url_authority;
 %% write data;
@@ -36,7 +43,7 @@
 // who would have thought this could be so hard ._.
 */
 
-#[deriving_eq]
+#[deriving(Eq)]
 pub struct Url {
     scheme   : ~str, // http, sip, file, etc. (never blank, always lowercase)
     user     : ~str, // who is you
@@ -52,8 +59,8 @@ pub struct Url {
 pub fn parse_authority(url: &mut Url, data: &[u8]) -> Result<(), ~str> {
     let mut cs: int;
     let mut p = 0;
-    let mut pe = data.len();
-    let mut eof = data.len();
+    let pe = data.len();
+    let eof = data.len();
     let mut mark = 0;
 
     // temporary holding place for user:pass and/or host:port cuz an
@@ -70,7 +77,7 @@ pub fn parse_authority(url: &mut Url, data: &[u8]) -> Result<(), ~str> {
     let mut hex = 0;
 
     fn parse_port(s: &str) -> Option<u16> {
-        if s != ~"" {
+        if !str::eq_slice(s, "") {
             do uint::from_str(s).chain_ref |port| {
                 if *port > 65535 { None } else { Some(*port as u16) }
             }
@@ -101,7 +108,7 @@ pub fn parse_authority(url: &mut Url, data: &[u8]) -> Result<(), ~str> {
 
         action copy_b1   { b1 = str::from_bytes(buf); buf.clear(); }
         action copy_b2   { b2 = str::from_bytes(buf); buf.clear(); }
-        action copy_host { url.host = copy b1; buf.clear();        }
+        action copy_host { url.host = b1.clone(); buf.clear();        }
 
         action copy_port {
             match parse_port(b2) {
@@ -125,15 +132,15 @@ pub fn parse_authority(url: &mut Url, data: &[u8]) -> Result<(), ~str> {
         }
 
         action atsymbol {
-            url.user = copy b1;
-            url.pass = copy b2;
+            url.user = b1.clone();
+            url.pass = b2.clone();
             b2 = ~"";
         }
 
         action alldone {
-            url.host = copy b1;
+            url.host = b1.clone();
 
-            if url.host == ~"" {
+            if str::eq_slice(url.host, "") {
                 url.host = str::from_bytes(buf);
             } else {
                 if buf.len() > 0 {

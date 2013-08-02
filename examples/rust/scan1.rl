@@ -1,3 +1,5 @@
+use std::io;
+
 %%{
     machine scanner;
 
@@ -62,15 +64,15 @@
 }%%
 
 fn main() {
-    let mut ts = 0;
-    let mut te = 0;
-    let mut act = 0;
+    let mut ts: uint;
+    let mut te: uint;
+    let mut act: uint;
 
     let data = "abbc1d1d2\n";
-    let mut cs = 0;
+    let mut cs: int;
     let mut p = 0;
-    let mut pe = data.len();
-    let mut eof = pe;
+    let pe = data.len();
+    let eof = pe;
 
     %% write init;
 
@@ -84,12 +86,12 @@ fn main() {
 
     %% write exec;
 
-    assert on_last == 1;
-    assert on_next == 2;
-    assert on_lag == 3;
-    assert sw1 == 4;
-    assert sw2 == 5;
-    assert cnt == 6;
+    assert_eq!(on_last, 1);
+    assert_eq!(on_next, 2);
+    assert_eq!(on_lag, 3);
+    assert_eq!(sw1, 4);
+    assert_eq!(sw2, 5);
+    assert_eq!(cnt, 6);
 }
 
 /*

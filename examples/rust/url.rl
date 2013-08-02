@@ -9,7 +9,7 @@
 //
 //    ragel --host-lang=rust url.rl -o url.rs
 //    ragel --host-lang=rust url_authority.rl -o url_authority.rs
-//    rustc url.rc
+//    rustc url.rs
 //    ./url
 //
 // To show a diagram of your state machine:
@@ -27,12 +27,17 @@
 // - http://tools.ietf.org/html/rfc3986
 //
 
-extern mod std;
+extern mod extra;
+
+use std::char;
+use std::str;
+use std::vec;
+
+pub use url_authority::{Url, parse_authority};
 
 mod url_authority;
-use url_authority::{Url, parse_authority};
 
-fn dummy() -> Url {
+pub fn dummy() -> Url {
     Url {
         scheme: ~"", user: ~"", pass: ~"", host: ~"", port: 0, 
         params: ~"", path: ~"", query: ~"", fragment: ~"",
@@ -50,16 +55,16 @@ fn dummy() -> Url {
 // performs in a predictable manner (for security/soft-realtime,)
 // doesn't modify your `data` buffer, and under no circumstances will
 // it panic (i hope!)
-fn url_parse(data: &[u8]) -> Result<Url, ~str> {
+pub fn url_parse(data: &[u8]) -> Result<Url, ~str> {
     let mut cs: int;
     let mut p = 0;
-    let mut pe = data.len();
-    let mut eof = data.len();
+    let pe = data.len();
+    let eof = data.len();
     let mut mark = 0;
     let mut url = dummy();
    
     // this buffer is so we can unescape while we roll
-    let mut buf = vec::with_capacity(16);
+    let mut buf = vec::with_capacity(500);
     let mut hex = 0;
 
     %%{
@@ -88,7 +93,7 @@ fn url_parse(data: &[u8]) -> Result<Url, ~str> {
         }
 
         action authority {
-            let v = data.view(mark, p);
+            let v = data.slice(mark, p);
             match parse_authority(&mut url, v) {
                 Ok(()) => { },
                 Err(e) => return Err(e),
@@ -157,7 +162,6 @@ fn url_parse(data: &[u8]) -> Result<Url, ~str> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time;
 
     #[test]
     fn test() {
@@ -322,39 +326,149 @@ mod tests {
             }
         )];
 
-        for data.each |data| {
+        foreach data in data.iter() {
             match *data {
                 (ref s, ref expected) => {
-                    match url_parse(str::as_bytes_slice(*s)) {
+                    match url_parse(s.as_bytes()) {
                         Err(e) => fail!(e),
-                        Ok(url) => assert *expected == url,
+                        Ok(url) => assert_eq!(expected, &url),
                     }
                 }
             }
         }
     }
+}
 
-    #[test]
-    fn benchmark() {
-        let rounds = 100000;
-        let urls = ~[
-            ~"a:a",
-            ~"http://google.com/",
-            ~"sip:jtunney@lobstertech.com",
-            ~"http://user:pass@example.com:80;hello/lol.php?fun#omg",
-            ~"file:///etc/passwd",
-        ];
+#[cfg(test)]
+mod bench {
+    use super::*;
+    use extra::test::BenchHarness;
 
-        for urls.each |url| {
-            let t1 = time::precise_time_ns();
-            for rounds.times {
-                url_parse(str::as_bytes_slice(*url));
-            }
-            let t2 = time::precise_time_ns();
-
-            io::println(fmt!("BENCH parse %s -> %f ns",
-                *url,
-                ((t2 - t1) as float) / (rounds as float)));
+    #[bench]
+    fn benchmark_ragel_1(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = url_parse("a:a".as_bytes());
         }
     }
+
+    #[bench]
+    fn benchmark_ragel_2(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = url_parse("http://google.com/".as_bytes());
+        }
+    }
+
+    #[bench]
+    fn benchmark_ragel_3(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = url_parse("sip:jtunney@lobstertech.com".as_bytes());
+        }
+    }
+
+    #[bench]
+    fn benchmark_ragel_4(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = url_parse("http://user:pass@example.com".as_bytes());
+        }
+    }
+
+    #[bench]
+    fn benchmark_ragel_5(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = url_parse("http://user:pass@example.com:80".as_bytes());
+        }
+    }
+
+    #[bench]
+    fn benchmark_ragel_6(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = url_parse("http://user:pass@example.com:80;hello".as_bytes());
+        }
+    }
+
+    #[bench]
+    fn benchmark_ragel_7(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = url_parse("http://user:pass@example.com:80;hello/lol.php".as_bytes());
+        }
+    }
+
+    #[bench]
+    fn benchmark_ragel_8(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = url_parse("http://user:pass@example.com:80;hello/lol.php?fun".as_bytes());
+        }
+    }
+
+    #[bench]
+    fn benchmark_ragel_9(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = url_parse("http://user:pass@example.com:80;hello/lol.php?fun#omg".as_bytes());
+        }
+    }
+
+    /*
+    #[bench]
+    fn benchmark_extra_url_1(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = extra::url::from_str("a:a");
+        }
+    }
+
+    #[bench]
+    fn benchmark_extra_url_2(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = extra::url::from_str("http://google.com/");
+        }
+    }
+
+    #[bench]
+    fn benchmark_extra_url_3(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = extra::url::from_str("sip:jtunney@lobstertech.com");
+        }
+    }
+
+    #[bench]
+    fn benchmark_extra_url_4(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = extra::url::from_str("http://user:pass@example.com");
+        }
+    }
+
+    #[bench]
+    fn benchmark_extra_url_5(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = extra::url::from_str("http://user:pass@example.com:80");
+        }
+    }
+
+    #[bench]
+    fn benchmark_extra_url_6(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = extra::url::from_str("http://user:pass@example.com:80;hello");
+        }
+    }
+
+    #[bench]
+    fn benchmark_extra_url_7(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = extra::url::from_str("http://user:pass@example.com:80;hello/lol.php");
+        }
+    }
+
+    #[bench]
+    fn benchmark_extra_url_8(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = extra::url::from_str("http://user:pass@example.com:80;hello/lol.php?fun");
+        }
+    }
+
+    #[bench]
+    fn benchmark_extra_url_9(bh: &mut BenchHarness) {
+        do bh.iter {
+            let _x = extra::url::from_str("http://user:pass@example.com:80;hello/lol.php?fun#omg");
+        }
+    }
+    */
 }

@@ -80,7 +80,7 @@ void RustTabCodeGen::GOTO( ostream &ret, int gotoDest, bool inFinish )
 		"{\n"
 		"    " << vCS() << " = " << gotoDest << ";\n"
 		"    _goto_targ = " << _again << ";\n"
-		"    " << CTRL_FLOW() << "loop _goto;\n"
+		"    " << CTRL_FLOW() << "loop '_goto;\n"
 		"}";
 }
 
@@ -96,7 +96,7 @@ void RustTabCodeGen::GOTO_EXPR( ostream &ret, GenInlineItem *ilItem, bool inFini
 		"    );\n"
 		"    _goto_targ = " << _again << ";\n"
 		"    " << CTRL_FLOW() <<
-		"    loop _goto;\n"
+		"    loop '_goto;\n"
 		"}";
 }
 
@@ -114,7 +114,7 @@ void RustTabCodeGen::CALL( ostream &ret, int callDest, int targState, bool inFin
 		"    " << vCS() << " = " << callDest << ";\n"
 		"    _goto_targ = " << _again << ";\n"
 		"    " << CTRL_FLOW() <<
-		"    loop _goto;\n"
+		"    loop '_goto;\n"
 		"}";
 
 	if ( prePushExpr != 0 )
@@ -138,7 +138,7 @@ void RustTabCodeGen::CALL_EXPR( ostream &ret, GenInlineItem *ilItem, int targSta
 		"    );\n"
 		"    _goto_targ = " << _again << ";\n"
 		"    " << CTRL_FLOW() <<
-		"    loop _goto;\n"
+		"    loop '_goto;\n"
 		"}";
 
 	if ( prePushExpr != 0 )
@@ -161,7 +161,7 @@ void RustTabCodeGen::RET( ostream &ret, bool inFinish )
 	ret <<
 		"    _goto_targ = " << _again << ";\n"
 		"    " << CTRL_FLOW() <<
-		"    loop _goto;\n"
+		"    loop '_goto;\n"
 		"}";
 }
 
@@ -172,7 +172,7 @@ void RustTabCodeGen::BREAK( ostream &ret, int targState )
 		"    " << P() << " += 1;\n"
 		"    _goto_targ = " << _out << ";\n"
 		"    " << CTRL_FLOW() <<
-		"    loop _goto;\n"
+		"    loop '_goto;\n"
 		"}";
 }
 
@@ -334,7 +334,7 @@ void RustTabCodeGen::COND_TRANSLATE()
 		"                loop {\n"
 		"                if _upper < _lower { break; }\n"
 		"\n"
-		"                _mid = _lower + (((_upper-_lower) >> 1) & int::compl(1));\n"
+		"                _mid = _lower + (((_upper-_lower) >> 1) & !1);\n"
 		"                if " << GET_WIDE_KEY() << " < " << CK() << "[_mid] {\n"
 		"                    _upper = _mid - 2;\n"
 		"                } else if " << GET_WIDE_KEY() << " > " << CK() << "[_mid+1] {\n"
@@ -376,7 +376,7 @@ void RustTabCodeGen::COND_TRANSLATE()
 void RustTabCodeGen::LOCATE_TRANS()
 {
 	out <<
-		"            loop _match: {\n"
+		"            '_match: loop {\n"
 		"                _keys = " << KO() << "[" << vCS() << "] as int;\n"
 		"                _trans = " << IO() << "[" << vCS() << "] as int;\n"
 		"                _klen = " << SL() << "[" << vCS() << "] as int;\n"
@@ -394,7 +394,7 @@ void RustTabCodeGen::LOCATE_TRANS()
 		"                            _lower = _mid + 1;\n"
 		"                        } else {\n"
 		"                            _trans += (_mid - _keys);\n"
-		"                            break _match;\n"
+		"                            break '_match;\n"
 		"                        }\n"
 		"                    }\n"
 		"                    _keys += _klen;\n"
@@ -409,14 +409,14 @@ void RustTabCodeGen::LOCATE_TRANS()
 		"                    loop {\n"
 		"                        if _upper < _lower { break; }\n"
 		"\n"
-		"                        _mid = _lower + (((_upper-_lower) >> 1) & int::compl(1));\n"
+		"                        _mid = _lower + (((_upper-_lower) >> 1) & !1);\n"
 		"                        if " << GET_WIDE_KEY() << " < " << K() << "[_mid] {\n"
 		"                            _upper = _mid - 2;\n"
 		"                        } else if " << GET_WIDE_KEY() << " > " << K() << "[_mid+1] {\n"
 		"                            _lower = _mid + 2;\n"
 		"                        } else {\n"
 		"                            _trans += ((_mid - _keys)>>1);\n"
-		"                            break _match;\n"
+		"                            break '_match;\n"
 		"                        }\n"
 		"                    }\n"
 		"                    _trans += _klen;\n"
@@ -1065,7 +1065,7 @@ void RustTabCodeGen::writeExec()
 		"\n";
 	
 	out <<
-		"    loop _goto: {\n"
+		"    '_goto: loop {\n"
 		"        match _goto_targ {\n"
 		"          0 => {\n";
 
@@ -1073,7 +1073,7 @@ void RustTabCodeGen::writeExec()
 		out <<
 			"            if " << P() << " == " << PE() << " {\n"
 			"                _goto_targ = " << _test_eof << ";\n"
-			"                loop _goto;\n"
+			"                loop '_goto;\n"
 			"            }\n";
 	}
 
@@ -1081,13 +1081,13 @@ void RustTabCodeGen::writeExec()
 		out <<
 			"            if " << vCS() << " == " << redFsm->errState->id << " {\n"
 			"                _goto_targ = " << _out << ";\n"
-			"                loop _goto;\n"
+			"                loop '_goto;\n"
 			"            }\n";
 	}
 
 	out <<
 		"            _goto_targ = " << _resume << ";\n"
-		"            loop _goto;\n"
+		"            loop '_goto;\n"
 		"          }\n"
 		"          " << _resume << " => {\n";
 
@@ -1176,7 +1176,7 @@ void RustTabCodeGen::writeExec()
 		out <<
 			"          if " << vCS() << " == " << redFsm->errState->id << " {\n"
 			"              _goto_targ = " << _out << ";\n"
-			"              loop _goto;\n"
+			"              loop '_goto;\n"
 			"          }\n";
 	}
 
@@ -1185,16 +1185,16 @@ void RustTabCodeGen::writeExec()
 			"          " << P() << " += 1;\n"
 			"          if " << P() << " != " << PE() << " {\n"
 			"              _goto_targ = " << _resume << ";\n"
-			"              loop _goto;\n"
+			"              loop '_goto;\n"
 			"          }\n"
 			"        _goto_targ = " << _test_eof << ";\n"
-			"        loop _goto;\n";
+			"        loop '_goto;\n";
 	}
 	else {
 		out <<
 			"          " << P() << " += 1;\n"
 			"          _goto_targ = " << _resume << ";\n"
-			"          loop _goto;\n";
+			"          loop '_goto;\n";
 	}
 
 	out <<
@@ -1210,7 +1210,7 @@ void RustTabCodeGen::writeExec()
 				"                if " << ET() << "[" << vCS() << "] > 0 {\n"
 				"                    _trans = (" << ET() << "[" << vCS() << "] - 1) as int;\n"
 				"                    _goto_targ = " << _eof_trans << ";\n"
-				"                    loop _goto;\n"
+				"                    loop '_goto;\n"
 				"                }\n";
 		}
 
@@ -1261,7 +1261,7 @@ std::ostream &RustTabCodeGen::OPEN_ARRAY( string type, string name )
 	div_count = 1;
 
 	out <<
-		"const " << name << ": &static/[" << type << "] = &[\n";
+		"static " << name << ": &'static [" << type << "] = &[\n";
 
 	return out;
 }
@@ -1294,7 +1294,7 @@ std::ostream &RustTabCodeGen::CLOSE_ARRAY()
 
 std::ostream &RustTabCodeGen::STATIC_VAR( string type, string name )
 {
-	out << "const " << name << ": " << type;
+	out << "static " << name << ": " << type;
 	return out;
 }
 
