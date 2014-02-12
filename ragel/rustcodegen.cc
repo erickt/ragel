@@ -80,7 +80,7 @@ void RustTabCodeGen::GOTO( ostream &ret, int gotoDest, bool inFinish )
 		"{\n"
 		"    " << vCS() << " = " << gotoDest << ";\n"
 		"    _goto_targ = " << _again << ";\n"
-		"    " << CTRL_FLOW() << "loop '_goto;\n"
+		"    " << CTRL_FLOW() << "continue '_goto;\n"
 		"}";
 }
 
@@ -96,7 +96,7 @@ void RustTabCodeGen::GOTO_EXPR( ostream &ret, GenInlineItem *ilItem, bool inFini
 		"    );\n"
 		"    _goto_targ = " << _again << ";\n"
 		"    " << CTRL_FLOW() <<
-		"    loop '_goto;\n"
+		"    continue '_goto;\n"
 		"}";
 }
 
@@ -114,7 +114,7 @@ void RustTabCodeGen::CALL( ostream &ret, int callDest, int targState, bool inFin
 		"    " << vCS() << " = " << callDest << ";\n"
 		"    _goto_targ = " << _again << ";\n"
 		"    " << CTRL_FLOW() <<
-		"    loop '_goto;\n"
+		"    continue '_goto;\n"
 		"}";
 
 	if ( prePushExpr != 0 )
@@ -138,7 +138,7 @@ void RustTabCodeGen::CALL_EXPR( ostream &ret, GenInlineItem *ilItem, int targSta
 		"    );\n"
 		"    _goto_targ = " << _again << ";\n"
 		"    " << CTRL_FLOW() <<
-		"    loop '_goto;\n"
+		"    continue '_goto;\n"
 		"}";
 
 	if ( prePushExpr != 0 )
@@ -161,7 +161,7 @@ void RustTabCodeGen::RET( ostream &ret, bool inFinish )
 	ret <<
 		"    _goto_targ = " << _again << ";\n"
 		"    " << CTRL_FLOW() <<
-		"    loop '_goto;\n"
+		"    continue '_goto;\n"
 		"}";
 }
 
@@ -172,7 +172,7 @@ void RustTabCodeGen::BREAK( ostream &ret, int targState )
 		"    " << P() << " += 1;\n"
 		"    _goto_targ = " << _out << ";\n"
 		"    " << CTRL_FLOW() <<
-		"    loop '_goto;\n"
+		"    continue '_goto;\n"
 		"}";
 }
 
@@ -1073,7 +1073,7 @@ void RustTabCodeGen::writeExec()
 		out <<
 			"            if " << P() << " == " << PE() << " {\n"
 			"                _goto_targ = " << _test_eof << ";\n"
-			"                loop '_goto;\n"
+			"                continue '_goto;\n"
 			"            }\n";
 	}
 
@@ -1081,13 +1081,13 @@ void RustTabCodeGen::writeExec()
 		out <<
 			"            if " << vCS() << " == " << redFsm->errState->id << " {\n"
 			"                _goto_targ = " << _out << ";\n"
-			"                loop '_goto;\n"
+			"                continue '_goto;\n"
 			"            }\n";
 	}
 
 	out <<
 		"            _goto_targ = " << _resume << ";\n"
-		"            loop '_goto;\n"
+		"            continue '_goto;\n"
 		"          }\n"
 		"          " << _resume << " => {\n";
 
@@ -1119,7 +1119,7 @@ void RustTabCodeGen::writeExec()
 	if ( redFsm->anyEofTrans() )
 		out <<
 			"            _goto_targ = " << _eof_trans << ";\n"
-			"            loop;\n"
+			"            continue;\n"
 			"          }\n"
 			"          " << _eof_trans << " => {\n";
 
@@ -1151,7 +1151,7 @@ void RustTabCodeGen::writeExec()
 
 	out <<
 		"          _goto_targ = " << _again << ";\n"
-		"          loop;\n"
+		"          continue;\n"
 		"        }\n"
 		"        " << _again << " => {\n";
 
@@ -1176,7 +1176,7 @@ void RustTabCodeGen::writeExec()
 		out <<
 			"          if " << vCS() << " == " << redFsm->errState->id << " {\n"
 			"              _goto_targ = " << _out << ";\n"
-			"              loop '_goto;\n"
+			"              continue '_goto;\n"
 			"          }\n";
 	}
 
@@ -1185,16 +1185,16 @@ void RustTabCodeGen::writeExec()
 			"          " << P() << " += 1;\n"
 			"          if " << P() << " != " << PE() << " {\n"
 			"              _goto_targ = " << _resume << ";\n"
-			"              loop '_goto;\n"
+			"              continue '_goto;\n"
 			"          }\n"
 			"        _goto_targ = " << _test_eof << ";\n"
-			"        loop '_goto;\n";
+			"        continue '_goto;\n";
 	}
 	else {
 		out <<
 			"          " << P() << " += 1;\n"
 			"          _goto_targ = " << _resume << ";\n"
-			"          loop '_goto;\n";
+			"          continue '_goto;\n";
 	}
 
 	out <<
@@ -1210,7 +1210,7 @@ void RustTabCodeGen::writeExec()
 				"                if " << ET() << "[" << vCS() << "] > 0 {\n"
 				"                    _trans = (" << ET() << "[" << vCS() << "] - 1) as int;\n"
 				"                    _goto_targ = " << _eof_trans << ";\n"
-				"                    loop '_goto;\n"
+				"                    continue '_goto;\n"
 				"                }\n";
 		}
 
