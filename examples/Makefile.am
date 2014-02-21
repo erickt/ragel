@@ -24,11 +24,12 @@ RE2C = re2c
 
 noinst_PROGRAMS = \
 	atoi awkemu clang concurrent cppscan format gotocallret mailbox params \
-	pullscan rlscan statechart 
+	pullscan rlscan statechart url
 
 EXTRA_DIST = \
 	gotocallret.rl pullscan.rl concurrent.rl rlscan.rl statechart.rl \
-	params.rl clang.rl cppscan.rl format.rl awkemu.rl mailbox.rl atoi.rl
+	params.rl clang.rl cppscan.rl format.rl awkemu.rl mailbox.rl atoi.rl \
+	url.rl
 
 gotocallret_SOURCES = gotocallret.cpp
 pullscan_SOURCES = pullscan.c
@@ -42,6 +43,7 @@ format_SOURCES = format.c
 awkemu_SOURCES = awkemu.c
 mailbox_SOURCES = mailbox.cpp
 atoi_SOURCES = atoi.cpp
+url_SOURCES = url.cpp
 
 gotocallret.cpp: gotocallret.rl
 	$(RAGEL) -G2 -o gotocallret.cpp gotocallret.rl 
@@ -78,6 +80,9 @@ mailbox.cpp: mailbox.rl
 
 atoi.cpp: atoi.rl
 	$(RAGEL) -G2 -o atoi.cpp atoi.rl
+
+url.cpp: url.rl
+	$(RAGEL) -G2 -o url.cpp url.rl
 
 ###
 
