@@ -342,6 +342,7 @@ mod tests {
 #[cfg(test)]
 mod bench {
     extern crate test;
+    extern crate extra;
 
     use super::url_parse;
     use self::test::BenchHarness;
@@ -409,7 +410,6 @@ mod bench {
         })
     }
 
-    /*
     #[bench]
     fn benchmark_extra_url_1(bh: &mut BenchHarness) {
         bh.iter(|| {
@@ -472,5 +472,4 @@ mod bench {
             let _x = extra::url::from_str("http://user:pass@example.com:80;hello/lol.php?fun#omg");
         })
     }
-    */
 }
