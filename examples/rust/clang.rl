@@ -26,25 +26,25 @@ use std::vec;
     # Symbols. Upon entering clear the buffer. On all transitions
     # buffer a character. Upon leaving dump the symbol.
     ( punct - [_'"] ) {
-        io::println(fmt!("symbol(%i): %c", curlin, data[ts] as char));
+        println!("symbol({}): {}", curlin, data[ts] as char);
     };
 
     # Identifier. Upon entering clear the buffer. On all transitions
     # buffer a character. Upon leaving, dump the identifier.
     alpha_u alnum_u* {
-        io::println(fmt!("ident(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
+        println!("ident({}): {}", curlin, str::from_utf8(data.slice(ts, te)));
     };
 
     # Single Quote.
     sliteralChar = [^'\\] | newline | ( '\\' . any_count_line );
     '\'' . sliteralChar* . '\'' {
-        io::println(fmt!("single_lit(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
+        println!("single_lit({}): {}", curlin, str::from_utf8(data.slice(ts, te)));
     };
 
     # Double Quote.
     dliteralChar = [^"\\] | newline | ( '\\' any_count_line );
     '"' . dliteralChar* . '"' {
-        io::println(fmt!("double_lit(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
+        println!("double_lit({}): {}", curlin, str::from_utf8(data.slice(ts, te)));
     };
 
     # Whitespace is standard ws, newlines and control codes.
@@ -60,19 +60,19 @@ use std::vec;
     # Match an integer. We don't bother clearing the buf or filling it.
     # The float machine overlaps with int and it will do it.
     digit+ {
-        io::println(fmt!("int(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
+        println!("int({}): {}", curlin, str::from_utf8(data.slice(ts, te)));
     };
 
     # Match a float. Upon entering the machine clear the buf, buffer
     # characters on every trans and dump the float upon leaving.
     digit+ '.' digit+ {
-        io::println(fmt!("float(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
+        println!("float({}): {}", curlin, str::from_utf8(data.slice(ts, te)));
     };
 
     # Match a hex. Upon entering the hex part, clear the buf, buffer characters
     # on every trans and dump the hex on leaving transitions.
     '0x' xdigit+ {
-        io::println(fmt!("hex(%i): %s", curlin, str::from_bytes(data.slice(ts, te))));
+        println!("hex({}): {}", curlin, str::from_utf8(data.slice(ts, te)));
     };
 
     *|;
@@ -82,6 +82,7 @@ use std::vec;
 
 static BUFSIZE: uint = 2048;
 
+#[allow(dead_assignment, unused_variable)]
 fn main() {
     let mut data = vec::from_elem(BUFSIZE, 0u8);
 
@@ -106,7 +107,7 @@ fn main() {
           fail!(~"OUT OF BUFFER SPACE");
         }
 
-        let pe = io::stdin().read(data.mut_slice_from(have), space);
+        let pe = io::stdin().read(data.mut_slice_from(have)).unwrap();
 
         /* Check if this is the end of file. */
         if pe < space {

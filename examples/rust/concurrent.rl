@@ -15,23 +15,21 @@ use std::io;
         self.start_word = self.cur_char;
     }
     action end_word {
-        io::println(fmt!("word: %i %i", self.start_word, self.cur_char - 1));
+        println!("word: {} {}", self.start_word, self.cur_char - 1);
     }
 
     action start_comment {
         self.start_comment = self.cur_char;
     }
     action end_comment {
-        io::println(fmt!("comment: %i %i", self.start_comment,
-                         self.cur_char - 1));
+        println!("comment: {} {}", self.start_comment, self.cur_char - 1);
     }
 
     action start_literal {
         self.start_literal = self.cur_char;
     }
     action end_literal {
-        io::println(fmt!("literal: %i %i", self.start_literal,
-                         self.cur_char - 1));
+        println!("literal: {} {}", self.start_literal, self.cur_char - 1);
     }
 
     # Count characters.
@@ -78,7 +76,7 @@ impl Concurrent {
         }
     }
 
-    fn execute(&mut self, data: &[const u8], len: uint, is_eof: bool) -> int {
+    fn execute(&mut self, data: &[u8], len: uint, is_eof: bool) -> int {
         let mut p = 0;
         let pe = len;
         let eof = if is_eof { pe } else { 0 };
@@ -108,7 +106,7 @@ fn main() {
     let mut concurrent = Concurrent::new();
 
     loop {
-        let len = io::stdin().read(buf, BUFSIZE);
+        let len = io::stdin().read(buf).unwrap();
         concurrent.execute(buf, len, len != BUFSIZE);
         if len != BUFSIZE {
             break;
@@ -116,6 +114,6 @@ fn main() {
     }
 
     if concurrent.finish() <= 0 {
-        io::stderr().write_line("concurrent: error parsing input");
+        println!("concurrent: error parsing input");
     }
 }

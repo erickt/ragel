@@ -17,8 +17,6 @@
 //   chrome rpn.png
 //
 
-use std::int;
-
 %% machine rpn;
 %% write data;
 
@@ -33,16 +31,16 @@ fn rpn(data: &str) -> Result<int, ~str> {
         action mark { mark = p; }
         action push {
             let s = data.slice(mark, p);
-            match int::from_str(s) {
-              None => return Err(fmt!("invalid integer %s", s)),
+            match from_str::<int>(s) {
+              None => return Err(format!("invalid integer {}", s)),
               Some(i) => st.push(i),
             }
         }
-        action add  { let y = st.pop(); let x = st.pop(); st.push(x + y); }
-        action sub  { let y = st.pop(); let x = st.pop(); st.push(x - y); }
-        action mul  { let y = st.pop(); let x = st.pop(); st.push(x * y); }
-        action div  { let y = st.pop(); let x = st.pop(); st.push(x / y); }
-        action abs  { let x = st.pop(); st.push(x.abs());                 }
+        action add  { let y = st.pop().unwrap(); let x = st.pop().unwrap(); st.push(x + y); }
+        action sub  { let y = st.pop().unwrap(); let x = st.pop().unwrap(); st.push(x - y); }
+        action mul  { let y = st.pop().unwrap(); let x = st.pop().unwrap(); st.push(x * y); }
+        action div  { let y = st.pop().unwrap(); let x = st.pop().unwrap(); st.push(x / y); }
+        action abs  { let x = st.pop().unwrap(); st.push(x.abs());                 }
         action abba { st.push(666); }
 
         stuff  = digit+ >mark %push
@@ -65,12 +63,12 @@ fn rpn(data: &str) -> Result<int, ~str> {
         if p == pe {
             Err(~"unexpected eof")
         } else {
-            Err(fmt!("error at position %u", p))
+            Err(format!("error at position {}", p))
         }
     } else if st.is_empty() {
         Err(~"rpn stack empty on result")
     } else {
-        Ok(st.pop())
+        Ok(st.pop().unwrap())
     }
 }
 
@@ -93,9 +91,9 @@ fn test_success() {
         (~"abba abba add\n", 1332),
     ];
 
-    foreach sx in rpnTests.iter() {
+    for sx in rpnTests.iter() {
         match *sx {
-            (ref s, x) => assert_eq!(rpn(*s).get(), x),
+            (ref s, x) => assert_eq!(rpn(*s).unwrap(), x),
         }
     }
 }
@@ -106,9 +104,9 @@ fn test_failure() {
         (~"\n", ~"rpn stack empty on result")
     ];
 
-    foreach sx in rpnFailTests.iter() {
+    for sx in rpnFailTests.iter() {
         match *sx {
-            (ref s, ref x) => assert_eq!(&rpn(*s).get_err(), x),
+            (ref s, ref x) => assert_eq!(&rpn(*s).unwrap_err(), x),
         }
     }
 }

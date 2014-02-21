@@ -364,7 +364,6 @@ void RustTabCodeGen::COND_TRANSLATE()
 	}
 
 	out <<
-		"                _ => fail!()";
 		"}\n"
 		"                      break;\n"
 		"                    }\n"
@@ -1295,7 +1294,9 @@ std::ostream &RustTabCodeGen::CLOSE_ARRAY()
 
 std::ostream &RustTabCodeGen::STATIC_VAR( string type, string name )
 {
-	out << "static " << name << ": " << type;
+	out <<
+		"#[allow(dead_code)]\n" <<
+		"static " << name << ": " << type;
 	return out;
 }
 

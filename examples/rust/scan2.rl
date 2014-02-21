@@ -24,8 +24,9 @@
 }%%
 
 #[deriving(Eq)]
-enum expect { Pat1, Pat2, Any }
+enum Expect { Pat1, Pat2, Any }
 
+#[allow(dead_assignment, unused_variable)]
 fn main() {
     let mut i = 0;
     let expect = ~[Pat1, Any, Pat2, Any, Any, Any];

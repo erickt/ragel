@@ -90,8 +90,7 @@ fn main() {
     let mut gcr = GotoCallRet::new();
 
     loop {
-        let len = buf.len();
-        let count = io::stdin().read(buf, len);
+        let count = io::stdin().read(buf).unwrap();
         if count == 0 { break; }
 
         gcr.execute(buf.mut_slice(0, count), false);

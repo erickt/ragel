@@ -63,6 +63,7 @@ use std::io;
   write data;
 }%%
 
+#[allow(dead_assignment, unused_variable)]
 fn main() {
     let mut ts: uint;
     let mut te: uint;

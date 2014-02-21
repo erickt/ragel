@@ -11,7 +11,6 @@
 
 use std::char;
 use std::str;
-use std::uint;
 use std::vec;
 
 %% machine url_authority;
@@ -77,10 +76,8 @@ pub fn parse_authority(url: &mut Url, data: &[u8]) -> Result<(), ~str> {
     let mut hex = 0;
 
     fn parse_port(s: &str) -> Option<u16> {
-        if !str::eq_slice(s, "") {
-            do uint::from_str(s).chain_ref |port| {
-                if *port > 65535 { None } else { Some(*port as u16) }
-            }
+        if s != "" {
+            from_str(s)
         } else {
             Some(0)
         }
@@ -106,27 +103,36 @@ pub fn parse_authority(url: &mut Url, data: &[u8]) -> Result<(), ~str> {
             buf.push(hex as u8);
         }
 
-        action copy_b1   { b1 = str::from_bytes(buf); buf.clear(); }
-        action copy_b2   { b2 = str::from_bytes(buf); buf.clear(); }
-        action copy_host { url.host = b1.clone(); buf.clear();        }
+        action copy_b1   {
+            b1 = str::from_utf8(buf).unwrap().to_owned();
+            buf.clear();
+        }
+        action copy_b2   {
+            b2 = str::from_utf8(buf).unwrap().to_owned();
+            buf.clear();
+        }
+        action copy_host {
+            url.host = b1.clone();
+            buf.clear();
+        }
 
         action copy_port {
             match parse_port(b2) {
                 None => {
-                    return Err(fmt!("bad url authority: %s",
-                        str::from_bytes(data.slice(0, data.len()))))
+                    return Err(format!("bad url authority: {}",
+                        str::from_utf8(data.slice(0, data.len()))))
                 }
                 Some(port) => url.port = port,
             }
         }
 
         action params {
-            let params = str::from_bytes(data.slice(mark, p));
+            let params = str::from_utf8(data.slice(mark, p)).unwrap().to_owned();
             url.params = params;
         }
 
         action params_eof {
-            let params = str::from_bytes(data.slice(mark, p));
+            let params = str::from_utf8(data.slice(mark, p)).unwrap().to_owned();
             url.params = params;
             return Ok(());
         }
@@ -141,15 +147,15 @@ pub fn parse_authority(url: &mut Url, data: &[u8]) -> Result<(), ~str> {
             url.host = b1.clone();
 
             if str::eq_slice(url.host, "") {
-                url.host = str::from_bytes(buf);
+                url.host = str::from_utf8(buf).unwrap().to_owned();
             } else {
                 if buf.len() > 0 {
-                    b2 = str::from_bytes(buf);
+                    b2 = str::from_utf8(buf).unwrap().to_owned();
                 }
                 match parse_port(b2) {
                     None => {
-                        return Err(fmt!("bad url authority: %s",
-                            str::from_bytes(data.slice(0, data.len()))))
+                        return Err(format!("bad url authority: {}",
+                            str::from_utf8(data.slice(0, data.len()))))
                     }
                     Some(port) => url.port = port,
                 }
