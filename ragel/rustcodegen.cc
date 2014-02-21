@@ -46,6 +46,7 @@ using std::istream;
 using std::ifstream;
 using std::ostream;
 using std::ios;
+using std::setiosflags;
 using std::cin;
 using std::cout;
 using std::cerr;
