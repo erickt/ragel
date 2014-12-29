@@ -1102,7 +1102,7 @@ void RustTabCodeGen::writeExec()
 			"                _acts += 1;\n"
 			"                match " << A() << "[__acts] {\n";
 			FROM_STATE_ACTION_SWITCH() <<
-			"                    _ => fail!(),\n"
+			"                    _ => panic!(),\n"
 			"                }\n"
 			"            }\n"
 			"\n";
@@ -1142,7 +1142,7 @@ void RustTabCodeGen::writeExec()
 			"                    _acts += 1;\n"
 			"                    match " << A() << "[__acts] {\n";
 		ACTION_SWITCH() <<
-			      "                        _ => fail!(),"
+			      "                        _ => panic!(),"
 			"                    }\n"
 			"                }\n"
 			"            }\n"
@@ -1166,7 +1166,7 @@ void RustTabCodeGen::writeExec()
 			"              _acts += 1;\n"
 			"              match " << A() << "[__acts] {\n";
 		TO_STATE_ACTION_SWITCH() <<
-			"                  _ => fail!(),"
+			"                  _ => panic!(),"
 			"              }\n"
 			"          }\n"
 			"\n";
@@ -1225,7 +1225,7 @@ void RustTabCodeGen::writeExec()
 				"                    __acts += 1;\n"
 				"                    match " << A() << "[___acts] {\n";
 			EOF_ACTION_SWITCH() <<
-	  			"                        _ => fail!(),"
+	  			"                        _ => panic!(),"
 				"                    }\n"
 				"                }\n";
 		}
@@ -1241,7 +1241,7 @@ void RustTabCodeGen::writeExec()
 
 	out <<
 		"        " << _out << " => { }\n"
-		"        _ => fail!(),";
+		"        _ => panic!(),";
 
 	/* The switch and goto loop. */
 	out <<
@@ -1589,7 +1589,7 @@ void RustTabCodeGen::LM_SWITCH( ostream &ret, GenInlineItem *item,
 	}
 
   ret <<
-	"        _ => fail!()";
+	"        _ => panic!()";
 
 	ret <<
 		"    }\n"
